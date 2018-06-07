@@ -1,6 +1,6 @@
--- MySQL dump 10.13  Distrib 5.7.22, for osx10.12 (x86_64)
+-- MySQL dump 10.13  Distrib 5.7.22, for Linux (x86_64)
 --
--- Host: localhost    Database: rentroll
+-- Host: 127.0.0.1    Database: rentroll
 -- ------------------------------------------------------
 -- Server version	5.7.22
 
@@ -2401,6 +2401,28 @@ CREATE TABLE `Transactant` (
   `LastModBy` bigint(20) NOT NULL DEFAULT '0',
   `CreateTS` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `CreateBy` bigint(20) NOT NULL DEFAULT '0',
+  `IsRenter` tinyint(1) NOT NULL DEFAULT '0',
+  `IsOccupant` tinyint(1) NOT NULL DEFAULT '0',
+  `IsGuarantor` tinyint(1) NOT NULL DEFAULT '0',
+  `CurrentAddress` varchar(256) NOT NULL DEFAULT '',
+  `CurrentLandLordName` varchar(100) NOT NULL DEFAULT '',
+  `CurrentLandLordPhoneNo` varchar(32) NOT NULL DEFAULT '',
+  `CurrentLengthOfResidency` bigint(20) NOT NULL DEFAULT '0',
+  `CurrentReasonForMoving` varchar(256) NOT NULL DEFAULT '',
+  `PriorAddress` varchar(256) NOT NULL DEFAULT '',
+  `PriorLandLordName` varchar(100) NOT NULL DEFAULT '',
+  `PriorLandLordPhoneNo` varchar(32) NOT NULL DEFAULT '',
+  `PriorLengthOfResidency` bigint(20) NOT NULL DEFAULT '0',
+  `PriorReasonForMoving` varchar(256) NOT NULL DEFAULT '',
+  `Evicted` tinyint(1) NOT NULL DEFAULT '0',
+  `EvictedDes` varchar(512) NOT NULL DEFAULT '',
+  `Convicted` tinyint(1) NOT NULL DEFAULT '0',
+  `ConvictedDes` varchar(512) NOT NULL DEFAULT '',
+  `Bankruptcy` tinyint(1) NOT NULL DEFAULT '0',
+  `BankruptcyDes` varchar(512) NOT NULL DEFAULT '',
+  `Position` varchar(32) NOT NULL DEFAULT '',
+  `GrossWages` bigint(20) NOT NULL DEFAULT '0',
+  `Comment` varchar(512) NOT NULL DEFAULT '',
   PRIMARY KEY (`TCID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -2438,6 +2460,8 @@ CREATE TABLE `User` (
   `LastModBy` bigint(20) NOT NULL DEFAULT '0',
   `CreateTS` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `CreateBy` bigint(20) NOT NULL DEFAULT '0',
+  `SSN` varchar(64) NOT NULL DEFAULT '',
+  `DrivingLicNO` varchar(64) NOT NULL DEFAULT '',
   PRIMARY KEY (`TCID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -2498,4 +2522,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2018-06-06 19:29:16
+-- Dump completed on 2018-06-07 17:31:00

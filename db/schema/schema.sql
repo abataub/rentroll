@@ -830,6 +830,25 @@ CREATE TABLE Transactant (
     PostalCode VARCHAR(100) NOT NULL DEFAULT '',
     Country VARCHAR(100) NOT NULL DEFAULT '',
     Website VARCHAR(100) NOT NULL DEFAULT '',
+    CurrentAddress VARCHAR(256) NOT NULL DEFAULT '', -- It have address of previous rentable
+    CurrentLandLordName VARCHAR(100) NOT NULL DEFAULT '',
+    CurrentLandLordPhoneNo VARCHAR(32) NOT NULL DEFAULT '',
+    CurrentLengthOfResidency BIGINT NOT NULL DEFAULT 0,
+    CurrentReasonForMoving VARCHAR(256) NOT NULL DEFAULT '',
+    PriorAddress VARCHAR(256) NOT NULL DEFAULT '', -- It have address of previous rentable
+    PriorLandLordName VARCHAR(100) NOT NULL DEFAULT '',
+    PriorLandLordPhoneNo VARCHAR(32) NOT NULL DEFAULT '',
+    PriorLengthOfResidency BIGINT NOT NULL DEFAULT 0,
+    PriorReasonForMoving VARCHAR(256) NOT NULL DEFAULT '',
+    Evicted BOOLEAN NOT NULL DEFAULT 0, -- 0 == false, 1 == true
+    EvictedDes VARCHAR(512) NOT NULL DEFAULT '',
+    Convicted BOOLEAN NOT NULL DEFAULT 0, -- 0 == false, 1 == true
+    ConvictedDes VARCHAR(512) NOT NULL DEFAULT '',
+    Bankruptcy BOOLEAN NOT NULL DEFAULT 0, -- 0 == false, 1 == true
+    BankruptcyDes VARCHAR(512) NOT NULL DEFAULT '',
+    Position VARCHAR(32) NOT NULL DEFAULT '',
+    GrossWages BIGINT NOT NULL DEFAULT 0,
+    Comment VARCHAR(512) NOT NULL DEFAULT '',
     LastModTime TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,  -- when was this record last written
     LastModBy BIGINT NOT NULL DEFAULT 0,                    -- employee UID (from phonebook) that modified it
     CreateTS TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,  -- when was this record created
@@ -903,6 +922,8 @@ CREATE TABLE User (
     EligibleFutureUser SMALLINT NOT NULL DEFAULT 1,              -- yes/no
     Industry VARCHAR(100) NOT NULL DEFAULT '',                   -- (e.g., construction, retail, banking etc.)
     SourceSLSID BIGINT NOT NULL DEFAULT 0,                       -- (e.g., resident referral, newspaper, radio, post card, expedia, travelocity, etc.)
+    SSN VARCHAR(64) NOT NULL DEFAULT '',
+    DrivingLicNo VARCHAR(64) NOT NULL DEFAULT '',
     LastModTime TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,  -- when was this record last written
     LastModBy BIGINT NOT NULL DEFAULT 0,                         -- employee UID (from phonebook) that modified it
     CreateTS TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,       -- when was this record created

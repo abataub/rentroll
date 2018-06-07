@@ -373,6 +373,35 @@ DBNAME="rentroll"
 # June 6, 2018
 # ALTER TABLE RentalAgreementPets ADD TCID BIGINT NOT NULL DEFAULT 0 AFTER RAID;
 
+# June 7, 2018
+# ALTER TABLE Transactant
+# ADD COLUMN IsRenter BOOLEAN NOT NULL DEFAULT 0, -- 0 == false, 1 == true
+# ADD COLUMN IsOccupant BOOLEAN NOT NULL DEFAULT 0, -- 0 == false, 1 == true
+# ADD COLUMN IsGuarantor BOOLEAN NOT NULL DEFAULT 0, -- 0 == false, 1 == true
+# ADD COLUMN CurrentAddress VARCHAR(256) NOT NULL DEFAULT '', -- It have address of previous rentable
+# ADD COLUMN CurrentLandLordName VARCHAR(100) NOT NULL DEFAULT '',
+# ADD COLUMN CurrentLandLordPhoneNo VARCHAR(32) NOT NULL DEFAULT '',
+# ADD COLUMN CurrentLengthOfResidency BIGINT NOT NULL DEFAULT 0,
+# ADD COLUMN CurrentReasonForMoving VARCHAR(256) NOT NULL DEFAULT '',
+# ADD COLUMN PriorAddress VARCHAR(256) NOT NULL DEFAULT '', -- It have address of previous rentable
+# ADD COLUMN PriorLandLordName VARCHAR(100) NOT NULL DEFAULT '',
+# ADD COLUMN PriorLandLordPhoneNo VARCHAR(32) NOT NULL DEFAULT '',
+# ADD COLUMN PriorLengthOfResidency BIGINT NOT NULL DEFAULT 0,
+# ADD COLUMN PriorReasonForMoving VARCHAR(256) NOT NULL DEFAULT '',
+# ADD COLUMN Evicted BOOLEAN NOT NULL DEFAULT 0, -- 0 == false, 1 == true
+# ADD COLUMN EvictedDes VARCHAR(512) NOT NULL DEFAULT '',
+# ADD COLUMN Convicted BOOLEAN NOT NULL DEFAULT 0, -- 0 == false, 1 == true
+# ADD COLUMN ConvictedDes VARCHAR(512) NOT NULL DEFAULT '',
+# ADD COLUMN Bankruptcy BOOLEAN NOT NULL DEFAULT 0, -- 0 == false, 1 == true
+# ADD COLUMN BankruptcyDes VARCHAR(512) NOT NULL DEFAULT '',
+# ADD COLUMN Position VARCHAR(32) NOT NULL DEFAULT '',
+# ADD COLUMN GrossWages BIGINT NOT NULL DEFAULT 0,
+# ADD COLUMN Comment VARCHAR(512) NOT NULL DEFAULT '';
+
+# ALTER TABLE User
+# ADD COLUMN SSN VARCHAR(64) NOT NULL DEFAULT '',
+# ADD COLUMN DrivingLicNo VARCHAR(64) NOT NULL DEFAULT '';
+
 #=====================================================
 #  Put modifications to schema in the lines below
 #=====================================================

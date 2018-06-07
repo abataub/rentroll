@@ -1,6 +1,6 @@
--- MySQL dump 10.13  Distrib 5.7.22, for osx10.12 (x86_64)
+-- MySQL dump 10.13  Distrib 5.7.22, for Linux (x86_64)
 --
--- Host: localhost    Database: rentroll
+-- Host: 127.0.0.1    Database: rentroll
 -- ------------------------------------------------------
 -- Server version	5.7.22
 
@@ -2413,6 +2413,28 @@ CREATE TABLE `Transactant` (
   `LastModBy` bigint(20) NOT NULL DEFAULT '0',
   `CreateTS` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `CreateBy` bigint(20) NOT NULL DEFAULT '0',
+  `IsRenter` tinyint(1) NOT NULL DEFAULT '0',
+  `IsOccupant` tinyint(1) NOT NULL DEFAULT '0',
+  `IsGuarantor` tinyint(1) NOT NULL DEFAULT '0',
+  `CurrentAddress` varchar(256) NOT NULL DEFAULT '',
+  `CurrentLandLordName` varchar(100) NOT NULL DEFAULT '',
+  `CurrentLandLordPhoneNo` varchar(32) NOT NULL DEFAULT '',
+  `CurrentLengthOfResidency` bigint(20) NOT NULL DEFAULT '0',
+  `CurrentReasonForMoving` varchar(256) NOT NULL DEFAULT '',
+  `PriorAddress` varchar(256) NOT NULL DEFAULT '',
+  `PriorLandLordName` varchar(100) NOT NULL DEFAULT '',
+  `PriorLandLordPhoneNo` varchar(32) NOT NULL DEFAULT '',
+  `PriorLengthOfResidency` bigint(20) NOT NULL DEFAULT '0',
+  `PriorReasonForMoving` varchar(256) NOT NULL DEFAULT '',
+  `Evicted` tinyint(1) NOT NULL DEFAULT '0',
+  `EvictedDes` varchar(512) NOT NULL DEFAULT '',
+  `Convicted` tinyint(1) NOT NULL DEFAULT '0',
+  `ConvictedDes` varchar(512) NOT NULL DEFAULT '',
+  `Bankruptcy` tinyint(1) NOT NULL DEFAULT '0',
+  `BankruptcyDes` varchar(512) NOT NULL DEFAULT '',
+  `Position` varchar(32) NOT NULL DEFAULT '',
+  `GrossWages` bigint(20) NOT NULL DEFAULT '0',
+  `Comment` varchar(512) NOT NULL DEFAULT '',
   PRIMARY KEY (`TCID`)
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -2423,7 +2445,7 @@ CREATE TABLE `Transactant` (
 
 LOCK TABLES `Transactant` WRITE;
 /*!40000 ALTER TABLE `Transactant` DISABLE KEYS */;
-INSERT INTO `Transactant` VALUES (1,1,0,'Bill','','Williams','','',0,'bill@bill.com','','','890-678-1234','7745 Elm Street','','Springfield','MO','65619','USA','','2017-09-09 04:40:14',0,'2017-08-31 17:56:26',0),(2,1,0,'Sally','','Struthers','','',0,'sally@strut.com','','','456-789-1230','345 Maple Ave','','Springfield','MO','65619','USA','','2017-09-09 04:41:09',0,'2017-08-31 17:57:13',0),(3,1,0,'Mark','','Markson','','',0,'mark@markson.com','','','123-456-7890','742 Timberlake Drive','','Springfield','MO','65619','USA','','2017-09-09 04:41:48',0,'2017-08-31 17:57:55',0);
+INSERT INTO `Transactant` VALUES (1,1,0,'Bill','','Williams','','',0,'bill@bill.com','','','890-678-1234','7745 Elm Street','','Springfield','MO','65619','USA','','2017-09-09 04:40:14',0,'2017-08-31 17:56:26',0,0,0,0,'','','',0,'','','','',0,'',0,'',0,'',0,'','',0,''),(2,1,0,'Sally','','Struthers','','',0,'sally@strut.com','','','456-789-1230','345 Maple Ave','','Springfield','MO','65619','USA','','2017-09-09 04:41:09',0,'2017-08-31 17:57:13',0,0,0,0,'','','',0,'','','','',0,'',0,'',0,'',0,'','',0,''),(3,1,0,'Mark','','Markson','','',0,'mark@markson.com','','','123-456-7890','742 Timberlake Drive','','Springfield','MO','65619','USA','','2017-09-09 04:41:48',0,'2017-08-31 17:57:55',0,0,0,0,'','','',0,'','','','',0,'',0,'',0,'',0,'','',0,'');
 /*!40000 ALTER TABLE `Transactant` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -2451,6 +2473,8 @@ CREATE TABLE `User` (
   `CreateTS` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `CreateBy` bigint(20) NOT NULL DEFAULT '0',
   `TCID` bigint(20) NOT NULL,
+  `SSN` varchar(64) NOT NULL DEFAULT '',
+  `DrivingLicNO` varchar(64) NOT NULL DEFAULT '',
   PRIMARY KEY (`TCID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -2461,7 +2485,7 @@ CREATE TABLE `User` (
 
 LOCK TABLES `User` WRITE;
 /*!40000 ALTER TABLE `User` DISABLE KEYS */;
-INSERT INTO `User` VALUES (1,0,'1900-01-01','','','','','',1,'',0,'2017-08-31 17:56:26',0,'2017-08-31 17:56:26',0,1),(1,0,'1900-01-01','','','','','',1,'',0,'2017-08-31 17:57:13',0,'2017-08-31 17:57:13',0,2),(1,0,'1900-01-01','','','','','',1,'',0,'2017-08-31 17:57:55',0,'2017-08-31 17:57:55',0,3);
+INSERT INTO `User` VALUES (1,0,'1900-01-01','','','','','',1,'',0,'2017-08-31 17:56:26',0,'2017-08-31 17:56:26',0,1,'',''),(1,0,'1900-01-01','','','','','',1,'',0,'2017-08-31 17:57:13',0,'2017-08-31 17:57:13',0,2,'',''),(1,0,'1900-01-01','','','','','',1,'',0,'2017-08-31 17:57:55',0,'2017-08-31 17:57:55',0,3,'','');
 /*!40000 ALTER TABLE `User` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -2512,4 +2536,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2018-06-06 19:29:22
+-- Dump completed on 2018-06-07 17:31:05

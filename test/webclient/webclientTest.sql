@@ -1,6 +1,6 @@
--- MySQL dump 10.13  Distrib 5.7.22, for osx10.12 (x86_64)
+-- MySQL dump 10.13  Distrib 5.7.22, for Linux (x86_64)
 --
--- Host: localhost    Database: rentroll
+-- Host: 127.0.0.1    Database: rentroll
 -- ------------------------------------------------------
 -- Server version	5.7.22
 
@@ -2417,6 +2417,28 @@ CREATE TABLE `Transactant` (
   `LastModBy` bigint(20) NOT NULL DEFAULT '0',
   `CreateTS` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `CreateBy` bigint(20) NOT NULL DEFAULT '0',
+  `IsRenter` tinyint(1) NOT NULL DEFAULT '0',
+  `IsOccupant` tinyint(1) NOT NULL DEFAULT '0',
+  `IsGuarantor` tinyint(1) NOT NULL DEFAULT '0',
+  `CurrentAddress` varchar(256) NOT NULL DEFAULT '',
+  `CurrentLandLordName` varchar(100) NOT NULL DEFAULT '',
+  `CurrentLandLordPhoneNo` varchar(32) NOT NULL DEFAULT '',
+  `CurrentLengthOfResidency` bigint(20) NOT NULL DEFAULT '0',
+  `CurrentReasonForMoving` varchar(256) NOT NULL DEFAULT '',
+  `PriorAddress` varchar(256) NOT NULL DEFAULT '',
+  `PriorLandLordName` varchar(100) NOT NULL DEFAULT '',
+  `PriorLandLordPhoneNo` varchar(32) NOT NULL DEFAULT '',
+  `PriorLengthOfResidency` bigint(20) NOT NULL DEFAULT '0',
+  `PriorReasonForMoving` varchar(256) NOT NULL DEFAULT '',
+  `Evicted` tinyint(1) NOT NULL DEFAULT '0',
+  `EvictedDes` varchar(512) NOT NULL DEFAULT '',
+  `Convicted` tinyint(1) NOT NULL DEFAULT '0',
+  `ConvictedDes` varchar(512) NOT NULL DEFAULT '',
+  `Bankruptcy` tinyint(1) NOT NULL DEFAULT '0',
+  `BankruptcyDes` varchar(512) NOT NULL DEFAULT '',
+  `Position` varchar(32) NOT NULL DEFAULT '',
+  `GrossWages` bigint(20) NOT NULL DEFAULT '0',
+  `Comment` varchar(512) NOT NULL DEFAULT '',
   PRIMARY KEY (`TCID`)
 ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -2427,7 +2449,7 @@ CREATE TABLE `Transactant` (
 
 LOCK TABLES `Transactant` WRITE;
 /*!40000 ALTER TABLE `Transactant` DISABLE KEYS */;
-INSERT INTO `Transactant` VALUES (1,1,0,'John0000','Q','Doe0000','J0000','',0,'jdoe0000@example.com','','','(561) 425-4574','','','','','','','','2018-02-06 12:10:18',0,'2018-02-06 12:10:18',0),(2,1,0,'John0001','Q','Doe0001','J0001','',0,'jdoe0001@example.com','','','(547) 632-8826','','','','','','','','2018-02-06 12:10:18',0,'2018-02-06 12:10:18',0),(3,1,0,'John0002','Q','Doe0002','J0002','',0,'jdoe0002@example.com','','','(315) 924-1282','','','','','','','','2018-02-06 12:10:18',0,'2018-02-06 12:10:18',0),(4,1,0,'John0003','Q','Doe0003','J0003','',0,'jdoe0003@example.com','','','(402) 706-3256','','','','','','','','2018-02-06 12:10:18',0,'2018-02-06 12:10:18',0),(5,1,0,'John0004','Q','Doe0004','J0004','',0,'jdoe0004@example.com','','','(284) 782-3037','','','','','','','','2018-02-06 12:10:18',0,'2018-02-06 12:10:18',0),(6,1,0,'John0005','Q','Doe0005','J0005','',0,'jdoe0005@example.com','','','(333) 108-4394','','','','','','','','2018-02-06 12:10:18',0,'2018-02-06 12:10:18',0),(7,1,0,'John0006','Q','Doe0006','J0006','',0,'jdoe0006@example.com','','','(598) 973-4133','','','','','','','','2018-02-06 12:10:18',0,'2018-02-06 12:10:18',0),(8,1,0,'John0007','Q','Doe0007','J0007','',0,'jdoe0007@example.com','','','(596) 222-1495','','','','','','','','2018-02-06 12:10:18',0,'2018-02-06 12:10:18',0),(9,1,0,'John0008','Q','Doe0008','J0008','',0,'jdoe0008@example.com','','','(822) 202-9916','','','','','','','','2018-02-06 12:10:18',0,'2018-02-06 12:10:18',0),(10,1,0,'John0009','Q','Doe0009','J0009','',0,'jdoe0009@example.com','','','(761) 556-2649','','','','','','','','2018-02-06 12:10:18',0,'2018-02-06 12:10:18',0);
+INSERT INTO `Transactant` VALUES (1,1,0,'John0000','Q','Doe0000','J0000','',0,'jdoe0000@example.com','','','(561) 425-4574','','','','','','','','2018-02-06 12:10:18',0,'2018-02-06 12:10:18',0,0,0,0,'','','',0,'','','','',0,'',0,'',0,'',0,'','',0,''),(2,1,0,'John0001','Q','Doe0001','J0001','',0,'jdoe0001@example.com','','','(547) 632-8826','','','','','','','','2018-02-06 12:10:18',0,'2018-02-06 12:10:18',0,0,0,0,'','','',0,'','','','',0,'',0,'',0,'',0,'','',0,''),(3,1,0,'John0002','Q','Doe0002','J0002','',0,'jdoe0002@example.com','','','(315) 924-1282','','','','','','','','2018-02-06 12:10:18',0,'2018-02-06 12:10:18',0,0,0,0,'','','',0,'','','','',0,'',0,'',0,'',0,'','',0,''),(4,1,0,'John0003','Q','Doe0003','J0003','',0,'jdoe0003@example.com','','','(402) 706-3256','','','','','','','','2018-02-06 12:10:18',0,'2018-02-06 12:10:18',0,0,0,0,'','','',0,'','','','',0,'',0,'',0,'',0,'','',0,''),(5,1,0,'John0004','Q','Doe0004','J0004','',0,'jdoe0004@example.com','','','(284) 782-3037','','','','','','','','2018-02-06 12:10:18',0,'2018-02-06 12:10:18',0,0,0,0,'','','',0,'','','','',0,'',0,'',0,'',0,'','',0,''),(6,1,0,'John0005','Q','Doe0005','J0005','',0,'jdoe0005@example.com','','','(333) 108-4394','','','','','','','','2018-02-06 12:10:18',0,'2018-02-06 12:10:18',0,0,0,0,'','','',0,'','','','',0,'',0,'',0,'',0,'','',0,''),(7,1,0,'John0006','Q','Doe0006','J0006','',0,'jdoe0006@example.com','','','(598) 973-4133','','','','','','','','2018-02-06 12:10:18',0,'2018-02-06 12:10:18',0,0,0,0,'','','',0,'','','','',0,'',0,'',0,'',0,'','',0,''),(8,1,0,'John0007','Q','Doe0007','J0007','',0,'jdoe0007@example.com','','','(596) 222-1495','','','','','','','','2018-02-06 12:10:18',0,'2018-02-06 12:10:18',0,0,0,0,'','','',0,'','','','',0,'',0,'',0,'',0,'','',0,''),(9,1,0,'John0008','Q','Doe0008','J0008','',0,'jdoe0008@example.com','','','(822) 202-9916','','','','','','','','2018-02-06 12:10:18',0,'2018-02-06 12:10:18',0,0,0,0,'','','',0,'','','','',0,'',0,'',0,'',0,'','',0,''),(10,1,0,'John0009','Q','Doe0009','J0009','',0,'jdoe0009@example.com','','','(761) 556-2649','','','','','','','','2018-02-06 12:10:18',0,'2018-02-06 12:10:18',0,0,0,0,'','','',0,'','','','',0,'',0,'',0,'',0,'','',0,'');
 /*!40000 ALTER TABLE `Transactant` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -2455,6 +2477,8 @@ CREATE TABLE `User` (
   `LastModBy` bigint(20) NOT NULL DEFAULT '0',
   `CreateTS` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `CreateBy` bigint(20) NOT NULL DEFAULT '0',
+  `SSN` varchar(64) NOT NULL DEFAULT '',
+  `DrivingLicNO` varchar(64) NOT NULL DEFAULT '',
   PRIMARY KEY (`TCID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -2515,4 +2539,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2018-06-06 19:29:37
+-- Dump completed on 2018-06-07 17:31:15

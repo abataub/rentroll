@@ -16,7 +16,7 @@ var mySQLRpl = string("?")
 var myRpl = mySQLRpl
 
 // TRNSfields defined fields for Transactant, used in at least one other function
-var TRNSfields = string("TCID,BID,NLID,FirstName,MiddleName,LastName,PreferredName,CompanyName,IsCompany,PrimaryEmail,SecondaryEmail,WorkPhone,CellPhone,Address,Address2,City,State,PostalCode,Country,Website,CreateTS,CreateBy,LastModTime,LastModBy")
+var TRNSfields = string("TCID,BID,NLID,FirstName,MiddleName,LastName,PreferredName,CompanyName,IsCompany,PrimaryEmail,SecondaryEmail,WorkPhone,CellPhone,Address,Address2,City,State,PostalCode,Country,Website,CurrentAddress,CurrentLandLordName,CurrentLandLordPhoneNo,CurrentLengthOfResidency,CurrentReasonForMoving,PriorAddress,PriorLandLordName,PriorLandLordPhoneNo,PriorLengthOfResidency,PriorReasonForMoving,Evicted,EvictedDes,Convicted,ConvictedDes,Bankruptcy,BankruptcyDes,Position,GrossWages,Comment,CreateTS,CreateBy,LastModTime,LastModBy")
 
 // ASMTflds defined fields for AssessmentTypes, used in at least one other function
 // var ASMTflds = string("ASMTID,RARequired,ManageToBudget,Name,Description,LastModTime,LastModBy")
@@ -667,7 +667,7 @@ func buildPreparedStatements() {
 	//==========================================
 	// User
 	//==========================================
-	flds = "TCID,BID,Points,DateofBirth,EmergencyContactName,EmergencyContactAddress,EmergencyContactTelephone,EmergencyEmail,AlternateAddress,EligibleFutureUser,Industry,SourceSLSID,CreateTS,CreateBy,LastModTime,LastModBy"
+	flds = "TCID,BID,Points,DateofBirth,EmergencyContactName,EmergencyContactAddress,EmergencyContactTelephone,EmergencyEmail,AlternateAddress,EligibleFutureUser,Industry,SourceSLSID,SSN,DrivingLicNo,CreateTS,CreateBy,LastModTime,LastModBy"
 	RRdb.DBFields["User"] = flds
 	RRdb.Prepstmt.GetUser, err = RRdb.Dbrr.Prepare("SELECT " + flds + " FROM User where TCID=?")
 	Errcheck(err)

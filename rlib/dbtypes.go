@@ -681,31 +681,50 @@ type DemandSource struct {
 // Transactant is the basic structure of information
 // about a person who is a Prospect, applicant, User, or Payor
 type Transactant struct {
-	Recid          int64 `json:"recid"` // this is to support the grid widget
-	TCID           int64
-	BID            int64
-	NLID           int64
-	FirstName      string
-	MiddleName     string
-	LastName       string
-	PreferredName  string
-	CompanyName    string // sometimes the entity will be a company
-	IsCompany      int64  // 1 => the entity is a company, 0 = not a company
-	PrimaryEmail   string
-	SecondaryEmail string
-	WorkPhone      string
-	CellPhone      string
-	Address        string
-	Address2       string
-	City           string
-	State          string
-	PostalCode     string
-	Country        string
-	Website        string // person's website
-	LastModTime    time.Time
-	LastModBy      int64
-	CreateTS       time.Time // when was this record created
-	CreateBy       int64     // employee UID (from phonebook) that created it
+	Recid                    int64 `json:"recid"` // this is to support the grid widget
+	TCID                     int64
+	BID                      int64
+	NLID                     int64
+	FirstName                string
+	MiddleName               string
+	LastName                 string
+	PreferredName            string
+	CompanyName              string // sometimes the entity will be a company
+	IsCompany                int64  // 1 => the entity is a company, 0 = not a company
+	PrimaryEmail             string
+	SecondaryEmail           string
+	WorkPhone                string
+	CellPhone                string
+	Address                  string
+	Address2                 string
+	City                     string
+	State                    string
+	PostalCode               string
+	Country                  string
+	Website                  string // person's website
+	CurrentAddress           string
+	CurrentLandLordName      string
+	CurrrentLandLordPhoneNo  string
+	CurrentLengthOfResidency int64
+	CurrentReasonForMoving   string
+	PriorAddress             string
+	PriorLandLordName        string
+	PriorLandLordPhoneNo     string
+	PriorLengthOfResidency   int64
+	PriorReasonForMoving     string
+	Evicted                  bool
+	EvictedDes               string
+	Convicted                bool
+	ConvictedDes             string
+	Bankruptcy               bool
+	BankruptcyDes            string
+	Position                 string
+	GrossWages               int64
+	Comment                  string
+	LastModTime              time.Time
+	LastModBy                int64
+	CreateTS                 time.Time // when was this record created
+	CreateBy                 int64     // employee UID (from phonebook) that created it
 }
 
 // Prospect contains info over and above
@@ -754,6 +773,8 @@ type User struct {
 	EligibleFutureUser        int64
 	Industry                  string
 	SourceSLSID               int64
+	SSN                       string
+	DrivingLicNo              string
 	LastModTime               time.Time
 	LastModBy                 int64
 	Vehicles                  []Vehicle
