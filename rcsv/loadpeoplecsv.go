@@ -30,27 +30,25 @@ const (
 	PostalCode                = iota
 	Country                   = iota
 	Points                    = iota
-	AccountRep                = iota
+	ThirdPartySource          = iota
 	DateofBirth               = iota
 	EmergencyContactName      = iota
 	EmergencyContactAddress   = iota
 	EmergencyContactTelephone = iota
-	EmergencyEmail            = iota
+	EmergencyContactEmail     = iota
 	AlternateAddress          = iota
 	EligibleFutureUser        = iota
 	Industry                  = iota
 	SourceSLSID               = iota
 	CreditLimit               = iota
 	TaxpayorID                = iota
-	EmployerName              = iota
-	EmployerStreetAddress     = iota
-	EmployerCity              = iota
-	EmployerState             = iota
-	EmployerPostalCode        = iota
-	EmployerEmail             = iota
-	EmployerPhone             = iota
+	CompanyAddress            = iota
+	CompanyCity               = iota
+	CompanyState              = iota
+	CompanyPostalCode         = iota
+	CompanyEmail              = iota
+	CompanyPhone              = iota
 	Occupation                = iota
-	ApplicationFee            = iota
 	Notes                     = iota
 	DesiredUsageStartDate     = iota
 	RentableTypePreference    = iota
@@ -60,8 +58,6 @@ const (
 	FollowUpDate              = iota
 	CSAgent                   = iota
 	OutcomeSLSID              = iota
-	FloatingDeposit           = iota
-	RAID                      = iota
 )
 
 // csvCols is an array that defines all the columns that should be in this csv file
@@ -83,27 +79,25 @@ var csvCols = []CSVColumn{
 	{"PostalCode", PostalCode},
 	{"Country", Country},
 	{"Points", Points},
-	{"AccountRep", AccountRep},
+	{"ThirdPartySource", ThirdPartySource},
 	{"DateofBirth", DateofBirth},
 	{"EmergencyContactName", EmergencyContactName},
 	{"EmergencyContactAddress", EmergencyContactAddress},
 	{"EmergencyContactTelephone", EmergencyContactTelephone},
-	{"EmergencyEmail", EmergencyEmail},
+	{"EmergencyContactEmail", EmergencyContactEmail},
 	{"AlternateAddress", AlternateAddress},
 	{"EligibleFutureUser", EligibleFutureUser},
 	{"Industry", Industry},
 	{"SourceSLSID", SourceSLSID},
 	{"CreditLimit", CreditLimit},
 	{"TaxpayorID", TaxpayorID},
-	{"EmployerName", EmployerName},
-	{"EmployerStreetAddress", EmployerStreetAddress},
-	{"EmployerCity", EmployerCity},
-	{"EmployerState", EmployerState},
-	{"EmployerPostalCode", EmployerPostalCode},
-	{"EmployerEmail", EmployerEmail},
-	{"EmployerPhone", EmployerPhone},
+	{"CompanyAddress", CompanyAddress},
+	{"CompanyCity", CompanyCity},
+	{"CompanyState", CompanyState},
+	{"CompanyPostalCode", CompanyPostalCode},
+	{"CompanyEmail", CompanyEmail},
+	{"CompanyPhone", CompanyPhone},
 	{"Occupation", Occupation},
-	{"ApplicationFee", ApplicationFee},
 	{"Notes", Notes},
 	{"DesiredUsageStartDate", DesiredUsageStartDate},
 	{"RentableTypePreference", RentableTypePreference},
@@ -113,8 +107,6 @@ var csvCols = []CSVColumn{
 	{"FollowUpDate", FollowUpDate},
 	{"CSAgent", CSAgent},
 	{"OutcomeSLSID", OutcomeSLSID},
-	{"FloatingDeposit", FloatingDeposit},
-	{"RAID", RAID},
 }
 
 func rcsvCopyString(p *string, s string) error {
@@ -124,8 +116,8 @@ func rcsvCopyString(p *string, s string) error {
 
 // CSV file format:
 //  |<------------------------------------------------------------------  TRANSACTANT ----------------------------------------------------------------------------->|  |<-------------------------------------------------------------------------------------------------------------  rlib.User  ------------------------------------------------------------------------------------------------------------------------------------------------------------------------>|<----------------------------------------------------------------------------- rlib.Payor ------------------------------------------------->|
-//   0   1          2           3         4            5          6             7               8          9          10       11        12    13     14          15       16      17       18        19        20       21                 22                  23                   24          25           26                    27                       28                         29              30                31                          32        33            34           35         36            37                     38            39             40                  41             42             43          44             45    46                     47                      48        49                  50                51            52       53            54               55
-// 	BUD, FirstName, MiddleName, LastName, CompanyName, IsCompany, PrimaryEmail, SecondaryEmail, WorkPhone, CellPhone, Address, Address2, City, State, PostalCode, Country, Points, VehicleMake, VehicleModel, VehicleColor, VehicleYear, LicensePlateState, LicensePlateNumber, ParkingPermitNumber, AccountRep, DateofBirth, EmergencyContactName, EmergencyContactAddress, EmergencyContactTelephone, EmergencyEmail, AlternateAddress, EligibleFutureUser, Industry, SourceSLSID, CreditLimit, TaxpayorID, EmployerName, EmployerStreetAddress, EmployerCity, EmployerState, EmployerPostalCode, EmployerEmail, EmployerPhone, Occupation, ApplicationFee,Notes,DesiredUsageStartDate, RentableTypePreference, Approver, DeclineReasonSLSID, OtherPreferences, FollowUpDate, CSAgent, OutcomeSLSID, FloatingDeposit, RAID
+//   0   1          2           3         4            5          6             7               8          9          10       11        12    13     14          15       16      17       18        19        20       21                 22                  23                   24          25           26                    27                       28                         29              30                31                          32        33            34           35         36            37                     38            39             40                  41             42             43          44             45    46                     47                      48        49                  50                51            52       53
+// 	BUD, FirstName, MiddleName, LastName, CompanyName, IsCompany, PrimaryEmail, SecondaryEmail, WorkPhone, CellPhone, Address, Address2, City, State, PostalCode, Country, Points, VehicleMake, VehicleModel, VehicleColor, VehicleYear, LicensePlateState, LicensePlateNumber, ParkingPermitNumber, ThirdPartySource, DateofBirth, EmergencyContactName, EmergencyContactAddress, EmergencyContactTelephone, EmergencyContactEmail, AlternateAddress, EligibleFutureUser, Industry, SourceSLSID, CreditLimit, TaxpayorID, CompanyAddress, CompanyCity, CompanyState, CompanyPostalCode, CompanyEmail, CompanyPhone, Occupation, Notes,DesiredUsageStartDate, RentableTypePreference, Approver, DeclineReasonSLSID, OtherPreferences, FollowUpDate, CSAgent, OutcomeSLSID
 // 	Edna,,Krabappel,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 // 	Ned,,Flanders,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 // 	Moe,,Szyslak,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
@@ -175,27 +167,25 @@ func CreatePeopleFromCSV(ctx context.Context, sa []string, lineno int) (int, err
 		{PostalCode, rcsvCopyString, &tr.PostalCode},
 		{Country, rcsvCopyString, &tr.Country},
 		{Points, nil, nil},
-		{AccountRep, nil, nil},
+		{ThirdPartySource, nil, nil},
 		{DateofBirth, nil, nil},
 		{EmergencyContactName, rcsvCopyString, &t.EmergencyContactName},
 		{EmergencyContactAddress, rcsvCopyString, &t.EmergencyContactAddress},
 		{EmergencyContactTelephone, rcsvCopyString, &t.EmergencyContactTelephone},
-		{EmergencyEmail, rcsvCopyString, &t.EmergencyEmail},
+		{EmergencyContactEmail, rcsvCopyString, &t.EmergencyContactEmail},
 		{AlternateAddress, rcsvCopyString, &t.AlternateAddress},
 		{EligibleFutureUser, nil, nil},
 		{Industry, rcsvCopyString, &t.Industry},
 		{SourceSLSID, nil, nil},
 		{CreditLimit, nil, nil},
 		{TaxpayorID, rcsvCopyString, &p.TaxpayorID},
-		{EmployerName, rcsvCopyString, &pr.EmployerName},
-		{EmployerStreetAddress, rcsvCopyString, &pr.EmployerStreetAddress},
-		{EmployerCity, rcsvCopyString, &pr.EmployerCity},
-		{EmployerState, rcsvCopyString, &pr.EmployerState},
-		{EmployerPostalCode, rcsvCopyString, &pr.EmployerPostalCode},
-		{EmployerEmail, rcsvCopyString, &pr.EmployerEmail},
-		{EmployerPhone, rcsvCopyString, &pr.EmployerPhone},
+		{CompanyAddress, rcsvCopyString, &pr.CompanyAddress},
+		{CompanyCity, rcsvCopyString, &pr.CompanyCity},
+		{CompanyState, rcsvCopyString, &pr.CompanyState},
+		{CompanyPostalCode, rcsvCopyString, &pr.CompanyPostalCode},
+		{CompanyEmail, rcsvCopyString, &pr.CompanyEmail},
+		{CompanyPhone, rcsvCopyString, &pr.CompanyPhone},
 		{Occupation, rcsvCopyString, &pr.Occupation},
-		{ApplicationFee, nil, nil},
 		{Notes, nil, nil},
 		{DesiredUsageStartDate, nil, nil},
 		{RentableTypePreference, nil, nil},
@@ -205,8 +195,6 @@ func CreatePeopleFromCSV(ctx context.Context, sa []string, lineno int) (int, err
 		{FollowUpDate, nil, nil},
 		{CSAgent, nil, nil},
 		{OutcomeSLSID, nil, nil},
-		{FloatingDeposit, nil, nil},
-		{RAID, nil, nil},
 	}
 
 	ignoreDupPhone := false
@@ -224,6 +212,10 @@ func CreatePeopleFromCSV(ctx context.Context, sa []string, lineno int) (int, err
 
 	for i := 0; i < len(sa); i++ {
 		s := strings.TrimSpace(sa[i])
+		if i >= len(rcsvPeopleHandlers) {
+			rlib.Ulog("Could not find handler for column: %s  col. index = %d\n", sa[i], i)
+			continue
+		}
 		if rcsvPeopleHandlers[i].p != nil {
 			rcsvPeopleHandlers[i].Handler(rcsvPeopleHandlers[i].p, s)
 			continue
@@ -247,11 +239,11 @@ func CreatePeopleFromCSV(ctx context.Context, sa []string, lineno int) (int, err
 			}
 		case IsCompany:
 			if len(s) > 0 {
-				ic, err := rlib.YesNoToInt(s)
+				ic, err := rlib.YesNoToBool(s)
 				if err != nil {
 					return CsvErrorSensitivity, fmt.Errorf("%s: line %d - IsCompany value is invalid: %s", funcname, lineno, s)
 				}
-				tr.IsCompany = int64(ic)
+				tr.IsCompany = ic
 			}
 		case CellPhone:
 			if len(s) > 0 && s[0] == '*' {
@@ -267,13 +259,13 @@ func CreatePeopleFromCSV(ctx context.Context, sa []string, lineno int) (int, err
 				}
 				t.Points = int64(i)
 			}
-		case AccountRep:
+		case ThirdPartySource:
 			if len(s) > 0 {
 				i, err := strconv.Atoi(strings.TrimSpace(s))
 				if err != nil {
-					return CsvErrorSensitivity, fmt.Errorf("%s: line %d - AccountRep value is invalid: %s", funcname, lineno, s)
+					return CsvErrorSensitivity, fmt.Errorf("%s: line %d - ThirdPartySource value is invalid: %s", funcname, lineno, s)
 				}
-				p.AccountRep = int64(i)
+				p.ThirdPartySource = int64(i)
 			}
 		case DateofBirth:
 			if len(s) > 0 {
@@ -285,7 +277,7 @@ func CreatePeopleFromCSV(ctx context.Context, sa []string, lineno int) (int, err
 		case EligibleFutureUser:
 			if len(s) > 0 {
 				var err error
-				t.EligibleFutureUser, err = rlib.YesNoToInt(s)
+				t.EligibleFutureUser, err = rlib.YesNoToBool(s)
 				if err != nil {
 					return CsvErrorSensitivity, fmt.Errorf("%s: line %d - %s", funcname, lineno, err.Error())
 				}
@@ -304,13 +296,6 @@ func CreatePeopleFromCSV(ctx context.Context, sa []string, lineno int) (int, err
 					return CsvErrorSensitivity, fmt.Errorf("%s: line %d - Invalid Credit Limit value: %s", funcname, lineno, s)
 				}
 				p.CreditLimit = x
-			}
-		case ApplicationFee:
-			if len(s) > 0 {
-				if x, err = strconv.ParseFloat(strings.TrimSpace(s), 64); err != nil {
-					return CsvErrorSensitivity, fmt.Errorf("%s: line %d - Invalid ApplicationFee value: %s", funcname, lineno, s)
-				}
-				pr.ApplicationFee = x
 			}
 		case Notes:
 			if len(s) > 0 {
@@ -371,22 +356,6 @@ func CreatePeopleFromCSV(ctx context.Context, sa []string, lineno int) (int, err
 				}
 				pr.OutcomeSLSID = y
 			}
-
-		case FloatingDeposit:
-			if len(s) > 0 {
-				if x, err = strconv.ParseFloat(strings.TrimSpace(s), 64); err != nil {
-					return CsvErrorSensitivity, fmt.Errorf("%s: line %d - Invalid FloatingDeposit value: %s", funcname, lineno, s)
-				}
-				pr.FloatingDeposit = x
-			}
-		case RAID:
-			if len(s) > 0 {
-				var y int64
-				if y, err = strconv.ParseInt(strings.TrimSpace(s), 10, 64); err != nil {
-					return CsvErrorSensitivity, fmt.Errorf("%s: line %d - Invalid RAID value: %s", funcname, lineno, s)
-				}
-				pr.RAID = y
-			}
 		default:
 			return CsvErrorSensitivity, fmt.Errorf("%s: line %d - Unknown field, column %d", funcname, lineno, i)
 		}
@@ -426,10 +395,10 @@ func CreatePeopleFromCSV(ctx context.Context, sa []string, lineno int) (int, err
 	// a first & last name.  If it is a company, then it needs a Company
 	// name.
 	//-------------------------------------------------------------------
-	if tr.IsCompany == 0 && len(tr.FirstName) == 0 && len(tr.LastName) == 0 {
+	if (!tr.IsCompany) && len(tr.FirstName) == 0 && len(tr.LastName) == 0 {
 		return CsvErrorSensitivity, fmt.Errorf("%s: line %d - FirstName and LastName are required for a person", funcname, lineno)
 	}
-	if tr.IsCompany == 1 && len(tr.CompanyName) == 0 {
+	if (tr.IsCompany) && len(tr.CompanyName) == 0 {
 		return CsvErrorSensitivity, fmt.Errorf("%s: line %d - CompanyName is required for a company", funcname, lineno)
 	}
 

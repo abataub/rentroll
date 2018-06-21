@@ -24,7 +24,7 @@ type RPerson struct {
 	PreferredName string
 	CompanyName   string // sometimes the entity will be a company
 	// IsCompany                 rlib.XJSONCompanyOrPerson // 1 => the entity is a company, 0 = not a company
-	IsCompany                 int64 // 1 => the entity is a company, 0 = not a company
+	IsCompany                 bool // 1 => the entity is a company, 0 = not a company
 	PrimaryEmail              string
 	SecondaryEmail            string
 	WorkPhone                 string
@@ -35,16 +35,17 @@ type RPerson struct {
 	State                     string
 	PostalCode                string
 	Country                   string
-	EmployerName              string
-	EmployerStreetAddress     string
-	EmployerCity              string
-	EmployerState             string
-	EmployerPostalCode        string
-	EmployerEmail             string
-	EmployerPhone             string
+	CompanyAddress            string
+	CompanyCity               string
+	CompanyState              string
+	CompanyPostalCode         string
+	CompanyEmail              string
+	CompanyPhone              string
 	Website                   string
 	Occupation                string
-	ApplicationFee            float64       // if non-zero this Prospect is an applicant
+	SSN                       string
+	DriversLicense            string
+	GrossIncome               float64
 	DesiredUsageStartDate     rlib.JSONDate // predicted rent start date
 	RentableTypePreference    int64         // RentableType
 	FLAGS                     uint64        // 0 = Approved/NotApproved,
@@ -54,22 +55,31 @@ type RPerson struct {
 	FollowUpDate              rlib.JSONDate // automatically fill out this date to sysdate + 24hrs
 	CSAgent                   int64         // Accord Directory UserID - for the CSAgent
 	OutcomeSLSID              int64         // id of string from a list of outcomes. Melissa to provide reasons
-	FloatingDeposit           float64       // d $(GLCASH) _, c $(GLGENRCV) _; assign to a shell of a Rental Agreement
-	RAID                      int64         // created to hold On Account amount of Floating Deposit
 	Points                    int64
 	DateofBirth               rlib.JSONDate
 	EmergencyContactName      string
 	EmergencyContactAddress   string
 	EmergencyContactTelephone string
-	EmergencyEmail            string
+	EmergencyContactEmail     string
 	AlternateAddress          string
-	EligibleFutureUser        rlib.XJSONYesNo
+	EligibleFutureUser        bool
 	Industry                  string
 	SourceSLSID               int64
 	CreditLimit               float64
 	TaxpayorID                string
-	AccountRep                int64
-	EligibleFuturePayor       rlib.XJSONYesNo
+	ThirdPartySource          int64
+	EligibleFuturePayor       bool
+	CurrentAddress            string
+	CurrentLandLordName       string
+	CurrentLandLordPhoneNo    string
+	CurrentReasonForMoving    int64
+	CurrentLengthOfResidency  string
+	PriorAddress              string
+	PriorLandLordName         string
+	PriorLandLordPhoneNo      string
+	PriorReasonForMoving      int64
+	PriorLengthOfResidency    string
+	CommissionableThirdParty string
 	LastModTime               rlib.JSONDateTime
 	LastModBy                 int64
 	CreateTS                  rlib.JSONDateTime
@@ -97,15 +107,16 @@ type RPersonForm struct {
 	City                      string
 	PostalCode                string
 	Country                   string
-	EmployerName              string
-	EmployerStreetAddress     string
-	EmployerCity              string
-	EmployerPostalCode        string
-	EmployerEmail             string
-	EmployerPhone             string
+	CompanyAddress            string
+	CompanyCity               string
+	CompanyPostalCode         string
+	CompanyEmail              string
+	CompanyPhone              string
 	Website                   string
 	Occupation                string
-	ApplicationFee            float64       // if non-zero this Prospect is an applicant
+	SSN                       string
+	DriversLicense            string
+	GrossIncome               float64
 	DesiredUsageStartDate     rlib.JSONDate // predicted rent start date
 	RentableTypePreference    int64         // RentableType
 	FLAGS                     uint64        // 0 = Approved/NotApproved,
@@ -115,32 +126,41 @@ type RPersonForm struct {
 	FollowUpDate              rlib.JSONDate // automatically fill out this date to sysdate + 24hrs
 	CSAgent                   int64         // Accord Directory UserID - for the CSAgent
 	OutcomeSLSID              int64         // id of string from a list of outcomes. Melissa to provide reasons
-	FloatingDeposit           float64       // d $(GLCASH) _, c $(GLGENRCV) _; assign to a shell of a Rental Agreement
-	RAID                      int64         // created to hold On Account amount of Floating Deposit
 	Points                    int64
 	DateofBirth               rlib.JSONDate
 	EmergencyContactName      string
 	EmergencyContactAddress   string
 	EmergencyContactTelephone string
-	EmergencyEmail            string
+	EmergencyContactEmail     string
 	AlternateAddress          string
 	Industry                  string
 	SourceSLSID               int64
 	CreditLimit               float64
 	TaxpayorID                string
-	AccountRep                int64
+	ThirdPartySource          int64
 	BID                       int64
 	BUD                       rlib.XJSONBud
-	IsCompany                 int64 // 1 => the entity is a company, 0 = not a company
+	IsCompany                 bool // 1 => the entity is a company, 0 = not a company
+	CurrentAddress            string
+	CurrentLandLordName       string
+	CurrentLandLordPhoneNo    string
+	CurrentReasonForMoving    int64
+	CurrentLengthOfResidency  string
+	PriorAddress              string
+	PriorLandLordName         string
+	PriorLandLordPhoneNo      string
+	PriorReasonForMoving      int64
+	PriorLengthOfResidency    string
+	CommissionableThirdParty string
 }
 
 // RPersonOther contains the data from selections boxes in the UI. These come back
 // in structure form rather than as a single string value.
 type RPersonOther struct {
 	State               string
-	EmployerState       string
-	EligibleFutureUser  string
-	EligibleFuturePayor string
+	CompanyState        string
+	EligibleFutureUser  bool
+	EligibleFuturePayor bool
 }
 
 // GetTransactantResponse is the response data to requests to get a transactant
@@ -186,11 +206,11 @@ func SvcTransactantTypeDown(w http.ResponseWriter, r *http.Request, d *ServiceDa
 		g   TransactantsTypedownResponse
 		err error
 	)
-	fmt.Printf("Entered %s\n", funcname)
+	rlib.Console("Entered %s\n", funcname)
 
-	fmt.Printf("handle typedown: GetTransactantsTypeDown( bid=%d, search=%s, limit=%d\n", d.BID, d.wsTypeDownReq.Search, d.wsTypeDownReq.Max)
+	rlib.Console("handle typedown: GetTransactantsTypeDown( bid=%d, search=%s, limit=%d\n", d.BID, d.wsTypeDownReq.Search, d.wsTypeDownReq.Max)
 	g.Records, err = rlib.GetTransactantTypeDown(r.Context(), d.BID, d.wsTypeDownReq.Search, d.wsTypeDownReq.Max)
-	fmt.Printf("GetTransactantTypeDown returned %d matches\n", len(g.Records))
+	rlib.Console("GetTransactantTypeDown returned %d matches\n", len(g.Records))
 	g.Total = int64(len(g.Records))
 	if err != nil {
 		e := fmt.Errorf("Error getting typedown matches: %s", err.Error())
@@ -281,7 +301,7 @@ func SvcSearchHandlerTransactants(w http.ResponseWriter, r *http.Request, d *Ser
 		err error
 		g   SearchTransactantsResponse
 	)
-	fmt.Printf("Entered %s\n", funcname)
+	rlib.Console("Entered %s\n", funcname)
 
 	const (
 		limitClause int = 100
@@ -318,11 +338,11 @@ func SvcSearchHandlerTransactants(w http.ResponseWriter, r *http.Request, d *Ser
 	countQuery := rlib.RenderSQLQuery(transactantsQuery, qc)
 	g.Total, err = rlib.GetQueryCount(countQuery) // total number of rows that match the criteria
 	if err != nil {
-		fmt.Printf("Error from rlib.GetQueryCount: %s\n", err.Error())
+		rlib.Console("Error from rlib.GetQueryCount: %s\n", err.Error())
 		SvcErrorReturn(w, err, funcname)
 		return
 	}
-	fmt.Printf("g.Total = %d\n", g.Total)
+	rlib.Console("g.Total = %d\n", g.Total)
 
 	// FETCH the records WITH LIMIT AND OFFSET
 	// limit the records to fetch from server, page by page
@@ -340,7 +360,7 @@ func SvcSearchHandlerTransactants(w http.ResponseWriter, r *http.Request, d *Ser
 
 	// get formatted query with substitution of select, where, order clause
 	qry := rlib.RenderSQLQuery(transactantsQueryWithLimit, qc)
-	fmt.Printf("db query = %s\n", qry)
+	rlib.Console("db query = %s\n", qry)
 
 	// execute the query
 	rows, err := rlib.RRdb.Dbrr.Query(qry)
@@ -397,14 +417,14 @@ func SvcFormHandlerXPerson(w http.ResponseWriter, r *http.Request, d *ServiceDat
 	var (
 		err error
 	)
-	fmt.Printf("Entered %s\n", funcname)
+	rlib.Console("Entered %s\n", funcname)
 
 	if d.TCID, err = SvcExtractIDFromURI(r.RequestURI, "TCID", 3, w); err != nil {
 		SvcErrorReturn(w, err, funcname)
 		return
 	}
 
-	fmt.Printf("Request: %s:  BID = %d,  TCID = %d\n", d.wsSearchReq.Cmd, d.BID, d.TCID)
+	rlib.Console("Request: %s:  BID = %d,  TCID = %d\n", d.wsSearchReq.Cmd, d.BID, d.TCID)
 
 	switch d.wsSearchReq.Cmd {
 	case "get":
@@ -516,10 +536,10 @@ func saveXPerson(w http.ResponseWriter, r *http.Request, d *ServiceData) {
 	)
 
 	target := `"record":`
-	fmt.Printf("Entered %s\n", funcname)
-	fmt.Printf("record data = %s\n", d.data)
+	rlib.Console("Entered %s\n", funcname)
+	rlib.Console("record data = %s\n", d.data)
 	i := strings.Index(d.data, target)
-	fmt.Printf("record is at index = %d\n", i)
+	rlib.Console("record is at index = %d\n", i)
 	if i < 0 {
 		e := fmt.Errorf("saveXPerson: cannot find %s in form json", target)
 		SvcErrorReturn(w, e, funcname)
@@ -527,7 +547,7 @@ func saveXPerson(w http.ResponseWriter, r *http.Request, d *ServiceData) {
 	}
 	s := d.data[i+len(target):]
 	s = s[:len(s)-1]
-	fmt.Printf("data to unmarshal is:  %s\n", s)
+	rlib.Console("data to unmarshal is:  %s\n", s)
 
 	//===============================================================
 	//------------------------------
@@ -538,17 +558,17 @@ func saveXPerson(w http.ResponseWriter, r *http.Request, d *ServiceData) {
 
 	err = json.Unmarshal([]byte(s), &gxp)
 	if err != nil {
-		fmt.Printf("Data unmarshal error: %s\n", err.Error())
+		rlib.Console("Data unmarshal error: %s\n", err.Error())
 		e := fmt.Errorf("%s: Error with json.Unmarshal:  %s", funcname, err.Error())
 		SvcErrorReturn(w, e, funcname)
 		return
 	}
-	fmt.Printf("saveXPersonL Start migration\n")
+	rlib.Console("saveXPersonL Start migration\n")
 	rlib.MigrateStructVals(&gxp, &xp.Trn)
 	rlib.MigrateStructVals(&gxp, &xp.Usr)
 	rlib.MigrateStructVals(&gxp, &xp.Psp)
 	rlib.MigrateStructVals(&gxp, &xp.Pay)
-	fmt.Printf("saveXPersonL Finished migration\n")
+	rlib.Console("saveXPersonL Finished migration\n")
 
 	//---------------------------
 	// Handle all the list data
@@ -556,29 +576,16 @@ func saveXPerson(w http.ResponseWriter, r *http.Request, d *ServiceData) {
 	var gxpo RPersonOther
 	err = json.Unmarshal([]byte(s), &gxpo)
 	if err != nil {
-		fmt.Printf("Data unmarshal error: %s\n", err.Error())
+		rlib.Console("Data unmarshal error: %s\n", err.Error())
 		e := fmt.Errorf("%s: Error with json.Unmarshal:  %s", funcname, err.Error())
 		SvcErrorReturn(w, e, funcname)
 		return
 	}
-	var ok bool
 
 	xp.Trn.State = gxpo.State
-	xp.Usr.EligibleFutureUser, ok = rlib.YesNoMap[gxpo.EligibleFutureUser]
-	if !ok {
-		e := fmt.Errorf("Could not map EligibleFutureUser value: %s", gxpo.EligibleFutureUser)
-		rlib.Ulog("%s", e.Error())
-		SvcErrorReturn(w, e, funcname)
-		return
-	}
-	xp.Psp.EmployerState = gxpo.EmployerState
-	xp.Pay.EligibleFuturePayor, ok = rlib.YesNoMap[gxpo.EligibleFuturePayor]
-	if !ok {
-		e := fmt.Errorf("Could not map EligibleFuturePayor value: %s", gxpo.EligibleFuturePayor)
-		rlib.Ulog("%s", e.Error())
-		SvcErrorReturn(w, e, funcname)
-		return
-	}
+	xp.Usr.EligibleFutureUser = gxpo.EligibleFutureUser
+	xp.Psp.CompanyState = gxpo.CompanyState
+	xp.Pay.EligibleFuturePayor = gxpo.EligibleFuturePayor
 
 	//===============================================================
 	// save or update
@@ -590,7 +597,7 @@ func saveXPerson(w http.ResponseWriter, r *http.Request, d *ServiceData) {
 			return
 		}
 	} else {
-		fmt.Printf("Updating Transactant record with TCID: %d\n", xp.Trn.TCID)
+		rlib.Console("Updating Transactant record with TCID: %d\n", xp.Trn.TCID)
 		if xpUpdatePerson(w, r, &xp) {
 			return
 		}
@@ -648,15 +655,15 @@ func deleteXPerson(w http.ResponseWriter, r *http.Request, d *ServiceData) {
 		del DeletePersonForm
 	)
 
-	fmt.Printf("Entered %s\n", funcname)
-	fmt.Printf("record data = %s\n", d.data)
+	rlib.Console("Entered %s\n", funcname)
+	rlib.Console("record data = %s\n", d.data)
 
 	if err := json.Unmarshal([]byte(d.data), &del); err != nil {
 		SvcErrorReturn(w, err, funcname)
 		return
 	}
 
-	// fmt.Printf("del = %#v\n", del)
+	// rlib.Console("del = %#v\n", del)
 
 	// delete Prospect
 	if err := rlib.DeleteProspect(r.Context(), del.TCID); err != nil {

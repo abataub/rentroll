@@ -3,21 +3,23 @@ package rlib
 import (
 	"context"
 	"database/sql"
+	"encoding/hex"
 	"extres"
 )
 
 // insertSessionProblem is a convenience function that replaces 8 lines
-// of code with about 4. Since these lines are needed for every insert call
+// of code with about 3. Since these lines are needed for every insert call
 // it saves a lot of lines.  Added this routine at the time Task,TaskList,
 // TaskDescriptor and  TaskListDefinition were added.
 //-----------------------------------------------------------------------------
-func insertSessionProblem(ctx context.Context, id *int64) error {
+func insertSessionProblem(ctx context.Context, id1, id2 *int64) error {
 	if !(RRdb.noAuth && AppConfig.Env != extres.APPENVPROD) {
 		sess, ok := SessionFromContext(ctx)
 		if !ok {
 			return ErrSessionRequired
 		}
-		(*id) = sess.UID
+		(*id1) = sess.UID
+		(*id2) = sess.UID
 		return nil
 	}
 	return nil
@@ -216,26 +218,13 @@ func InsertBuildingWithID(ctx context.Context, a *Building) (int64, error) {
 // InsertBusiness writes a new Business record.
 // returns the new Business ID and any associated error
 func InsertBusiness(ctx context.Context, a *Business) (int64, error) {
+	var rid = int64(0)
+	var err error
+	var res sql.Result
 
-	var (
-		rid = int64(0)
-		err error
-		res sql.Result
-	)
-
-	// session... context
-	if !(RRdb.noAuth && AppConfig.Env != extres.APPENVPROD) {
-		sess, ok := SessionFromContext(ctx)
-		if !ok {
-			return rid, ErrSessionRequired
-		}
-
-		// user from session, CreateBy, LastModBy
-		a.CreateBy = sess.UID
-		a.LastModBy = a.CreateBy
+	if err = insertSessionProblem(ctx, &a.CreateBy, &a.LastModBy); err != nil {
+		return rid, err
 	}
-
-	// transaction... context
 
 	// TODO(Sudip): keep mind this FLAGS insertion in fields, this might be removed in the future
 	fields := []interface{}{a.Designation, a.Name, a.DefaultRentCycle, a.DefaultProrationCycle, a.DefaultGSRPC, a.ClosePeriodTLID, a.FLAGS, a.CreateBy, a.LastModBy}
@@ -260,6 +249,45 @@ func InsertBusiness(ctx context.Context, a *Business) (int64, error) {
 
 		// build business list and cache again
 		RRdb.BUDlist, RRdb.BizCache = BuildBusinessDesignationMap()
+	}
+	return rid, err
+}
+
+// InsertBusinessProperties inserts the property with data provided in "a".
+func InsertBusinessProperties(ctx context.Context, a *BusinessProperties) (int64, error) {
+	var rid = int64(0)
+	var err error
+	var res sql.Result
+
+	if err = insertSessionProblem(ctx, &a.CreateBy, &a.LastModBy); err != nil {
+		return rid, err
+	}
+
+	// make sure that json is valid before inserting it in database
+	if !(IsValidJSONConversion(a.Data)) {
+		return rid, ErrFlowInvalidJSONData
+	}
+
+	// as a.Data is type of json.RawMessage - convert it to byte stream so that it can be inserted
+	// in mysql `json` type column
+	fields := []interface{}{a.BID, a.Name, []byte(a.Data), a.FLAGS, a.CreateBy, a.LastModBy}
+	if tx, ok := DBTxFromContext(ctx); ok { // if transaction is supplied
+		stmt := tx.Stmt(RRdb.Prepstmt.InsertBusinessProperties)
+		defer stmt.Close()
+		res, err = stmt.Exec(fields...)
+	} else {
+		res, err = RRdb.Prepstmt.InsertBusinessProperties.Exec(fields...)
+	}
+
+	// After getting result...
+	if nil == err {
+		x, err := res.LastInsertId()
+		if err == nil {
+			rid = int64(x)
+			a.BPID = rid
+		}
+	} else {
+		err = insertError(err, "BusinessProperties", *a)
 	}
 	return rid, err
 }
@@ -685,7 +713,7 @@ func InsertFlow(ctx context.Context, a *Flow) (int64, error) {
 	}
 
 	// make sure that json is valid before inserting it in database
-	if !(IsFlowDataValidJSON(a.Data)) {
+	if !(IsValidJSONConversion(a.Data)) {
 		return rid, ErrFlowInvalidJSONData
 	}
 
@@ -693,7 +721,7 @@ func InsertFlow(ctx context.Context, a *Flow) (int64, error) {
 
 	// as a.Data is type of json.RawMessage - convert it to byte stream so that it can be inserted
 	// in mysql `json` type column
-	fields := []interface{}{a.BID, a.UserRefNo, a.FlowType, []byte(a.Data), a.CreateBy, a.LastModBy}
+	fields := []interface{}{a.BID, a.UserRefNo, a.FlowType, a.ID, []byte(a.Data), a.CreateBy, a.LastModBy}
 	if tx, ok := DBTxFromContext(ctx); ok { // if transaction is supplied
 		stmt := tx.Stmt(RRdb.Prepstmt.InsertFlow)
 		defer stmt.Close()
@@ -993,26 +1021,19 @@ func InsertJournalMarker(ctx context.Context, a *JournalMarker) (int64, error) {
 
 // InsertLedgerMarker writes a new LedgerMarker record to the database
 func InsertLedgerMarker(ctx context.Context, a *LedgerMarker) (int64, error) {
+	var rid = int64(0)
+	var err error
+	var res sql.Result
 
-	var (
-		rid = int64(0)
-		err error
-		res sql.Result
-	)
-
-	// session... context
-	if !(RRdb.noAuth && AppConfig.Env != extres.APPENVPROD) {
-		sess, ok := SessionFromContext(ctx)
-		if !ok {
-			return rid, ErrSessionRequired
-		}
-
-		// user from session, CreateBy, LastModBy
-		a.CreateBy = sess.UID
-		a.LastModBy = a.CreateBy
+	if err = insertSessionProblem(ctx, &a.CreateBy, &a.LastModBy); err != nil {
+		return rid, err
 	}
 
-	// transaction... context
+	// if a.BID == 0 {
+	// 	debug.PrintStack()
+	// 	log.Fatal(err)
+	// }
+
 	fields := []interface{}{a.LID, a.BID, a.RAID, a.RID, a.TCID, a.Dt, a.Balance, a.State, a.CreateBy, a.LastModBy}
 	if tx, ok := DBTxFromContext(ctx); ok { // if transaction is supplied
 		stmt := tx.Stmt(RRdb.Prepstmt.InsertLedgerMarker)
@@ -1036,23 +1057,12 @@ func InsertLedgerMarker(ctx context.Context, a *LedgerMarker) (int64, error) {
 
 // InsertLedgerEntry writes a new LedgerEntry to the database
 func InsertLedgerEntry(ctx context.Context, a *LedgerEntry) (int64, error) {
+	var rid = int64(0)
+	var err error
+	var res sql.Result
 
-	var (
-		rid = int64(0)
-		err error
-		res sql.Result
-	)
-
-	// session... context
-	if !(RRdb.noAuth && AppConfig.Env != extres.APPENVPROD) {
-		sess, ok := SessionFromContext(ctx)
-		if !ok {
-			return rid, ErrSessionRequired
-		}
-
-		// user from session, CreateBy, LastModBy
-		a.CreateBy = sess.UID
-		a.LastModBy = a.CreateBy
+	if err = insertSessionProblem(ctx, &a.CreateBy, &a.LastModBy); err != nil {
+		return rid, err
 	}
 
 	// transaction... context
@@ -1080,28 +1090,17 @@ func InsertLedgerEntry(ctx context.Context, a *LedgerEntry) (int64, error) {
 
 // InsertLedger writes a new GLAccount to the database
 func InsertLedger(ctx context.Context, a *GLAccount) (int64, error) {
+	var rid = int64(0)
+	var err error
+	var res sql.Result
 
-	var (
-		rid = int64(0)
-		err error
-		res sql.Result
-	)
-
-	// session... context
-	if !(RRdb.noAuth && AppConfig.Env != extres.APPENVPROD) {
-		sess, ok := SessionFromContext(ctx)
-		if !ok {
-			return rid, ErrSessionRequired
-		}
-
-		// user from session, CreateBy, LastModBy
-		a.CreateBy = sess.UID
-		a.LastModBy = a.CreateBy
+	if err = insertSessionProblem(ctx, &a.CreateBy, &a.LastModBy); err != nil {
+		return rid, err
 	}
 
 	//                                            PLID, BID,     RAID,  TCID,   GLNumber,   Status,   Name,   AcctType,   AllowPost,  FLAGS,   Description, CreateBy, LastModBy
 	// transaction... context
-	fields := []interface{}{a.PLID, a.BID, a.RAID, a.TCID, a.GLNumber, a.Status, a.Name, a.AcctType, a.AllowPost, a.FLAGS, a.Description, a.CreateBy, a.LastModBy}
+	fields := []interface{}{a.PLID, a.BID, a.RAID, a.TCID, a.GLNumber, /*a.Status,*/ a.Name, a.AcctType, a.AllowPost, a.FLAGS, a.Description, a.CreateBy, a.LastModBy}
 	if tx, ok := DBTxFromContext(ctx); ok { // if transaction is supplied
 		stmt := tx.Stmt(RRdb.Prepstmt.InsertLedger)
 		defer stmt.Close()
@@ -1129,23 +1128,12 @@ func InsertLedger(ctx context.Context, a *GLAccount) (int64, error) {
 
 // InsertNote writes a new Note to the database
 func InsertNote(ctx context.Context, a *Note) (int64, error) {
+	var rid = int64(0)
+	var err error
+	var res sql.Result
 
-	var (
-		rid = int64(0)
-		err error
-		res sql.Result
-	)
-
-	// session... context
-	if !(RRdb.noAuth && AppConfig.Env != extres.APPENVPROD) {
-		sess, ok := SessionFromContext(ctx)
-		if !ok {
-			return rid, ErrSessionRequired
-		}
-
-		// user from session, CreateBy, LastModBy
-		a.CreateBy = sess.UID
-		a.LastModBy = a.CreateBy
+	if err = insertSessionProblem(ctx, &a.CreateBy, &a.LastModBy); err != nil {
+		return rid, err
 	}
 
 	// transaction... context
@@ -2340,10 +2328,9 @@ func InsertTask(ctx context.Context, a *Task) error {
 	var err error
 	var res sql.Result
 
-	if err = insertSessionProblem(ctx, &a.CreateBy); err != nil {
+	if err = insertSessionProblem(ctx, &a.CreateBy, &a.LastModBy); err != nil {
 		return err
 	}
-	a.LastModBy = a.CreateBy
 
 	fields := []interface{}{a.BID, a.TLID, a.Name, a.Worker, a.DtDue, a.DtPreDue, a.DtDone, a.DtPreDone, a.FLAGS, a.DoneUID, a.PreDoneUID, a.Comment, a.CreateBy, a.LastModBy}
 	if tx, ok := DBTxFromContext(ctx); ok { // if transaction is supplied
@@ -2372,10 +2359,9 @@ func InsertTaskList(ctx context.Context, a *TaskList) error {
 	var err error
 	var res sql.Result
 
-	if err = insertSessionProblem(ctx, &a.CreateBy); err != nil {
+	if err = insertSessionProblem(ctx, &a.CreateBy, &a.LastModBy); err != nil {
 		return err
 	}
-	a.LastModBy = a.CreateBy
 	fields := []interface{}{a.BID, a.PTLID, a.TLDID, a.Name, a.Cycle, a.DtDue, a.DtPreDue, a.DtDone, a.DtPreDone, a.FLAGS, a.DoneUID, a.PreDoneUID, a.EmailList, a.DtLastNotify, a.DurWait, a.Comment, a.CreateBy, a.LastModBy}
 	if tx, ok := DBTxFromContext(ctx); ok { // if transaction is supplied
 		stmt := tx.Stmt(RRdb.Prepstmt.InsertTaskList)
@@ -2402,10 +2388,9 @@ func InsertTaskDescriptor(ctx context.Context, a *TaskDescriptor) error {
 	var err error
 	var res sql.Result
 
-	if err = insertSessionProblem(ctx, &a.CreateBy); err != nil {
+	if err = insertSessionProblem(ctx, &a.CreateBy, &a.LastModBy); err != nil {
 		return err
 	}
-	a.LastModBy = a.CreateBy
 	fields := []interface{}{a.BID, a.TLDID, a.Name, a.Worker, a.EpochDue, a.EpochPreDue, a.FLAGS, a.Comment, a.LastModBy, a.TDID}
 	if tx, ok := DBTxFromContext(ctx); ok { // if transaction is supplied
 		stmt := tx.Stmt(RRdb.Prepstmt.InsertTaskDescriptor)
@@ -2432,10 +2417,9 @@ func InsertTaskListDefinition(ctx context.Context, a *TaskListDefinition) error 
 	var err error
 	var res sql.Result
 
-	if err = insertSessionProblem(ctx, &a.CreateBy); err != nil {
+	if err = insertSessionProblem(ctx, &a.CreateBy, &a.LastModBy); err != nil {
 		return err
 	}
-	a.LastModBy = a.CreateBy
 
 	fields := []interface{}{a.BID, a.Name, a.Cycle, a.Epoch, a.EpochDue, a.EpochPreDue, a.FLAGS, a.EmailList, a.DurWait, a.Comment, a.LastModBy, a.TLDID}
 	if tx, ok := DBTxFromContext(ctx); ok { // if transaction is supplied
@@ -2484,7 +2468,10 @@ func InsertTransactant(ctx context.Context, a *Transactant) (int64, error) {
 	}
 
 	// transaction... context
-	fields := []interface{}{a.BID, a.NLID, a.FirstName, a.MiddleName, a.LastName, a.PreferredName, a.CompanyName, a.IsCompany, a.PrimaryEmail, a.SecondaryEmail, a.WorkPhone, a.CellPhone, a.Address, a.Address2, a.City, a.State, a.PostalCode, a.Country, a.Website, a.CreateBy, a.LastModBy}
+	fields := []interface{}{a.BID, a.NLID, a.FirstName, a.MiddleName, a.LastName, a.PreferredName,
+		a.CompanyName, a.IsCompany, a.PrimaryEmail, a.SecondaryEmail, a.WorkPhone, a.CellPhone,
+		a.Address, a.Address2, a.City, a.State, a.PostalCode, a.Country, a.Website, a.FLAGS,
+		a.CreateBy, a.LastModBy}
 	if tx, ok := DBTxFromContext(ctx); ok { // if transaction is supplied
 		stmt := tx.Stmt(RRdb.Prepstmt.InsertTransactant)
 		defer stmt.Close()
@@ -2510,10 +2497,11 @@ func InsertTransactant(ctx context.Context, a *Transactant) (int64, error) {
 func InsertPayor(ctx context.Context, a *Payor) (int64, error) {
 
 	var (
-		rid = int64(0)
+		rid int64
 		err error
 		// res sql.Result
 	)
+	rid = a.TCID
 
 	// session... context
 	if !(RRdb.noAuth && AppConfig.Env != extres.APPENVPROD) {
@@ -2527,8 +2515,22 @@ func InsertPayor(ctx context.Context, a *Payor) (int64, error) {
 		a.LastModBy = a.CreateBy
 	}
 
+	b1, err := Encrypt(a.SSN)
+	if err != nil {
+		return rid, err
+	}
+	b := hex.EncodeToString(b1)
+	d1, err := Encrypt(a.DriversLicense)
+	if err != nil {
+		return rid, err
+	}
+	d := hex.EncodeToString(d1)
+	// Console("Encrypted SSN: %s\n", b)
+	// Console("Encrypted DriversLicense: %s\n", d)
+
 	// transaction... context
-	fields := []interface{}{a.TCID, a.BID, a.CreditLimit, a.TaxpayorID, a.AccountRep, a.EligibleFuturePayor, a.CreateBy, a.LastModBy}
+	fields := []interface{}{a.TCID, a.BID, a.CreditLimit, a.TaxpayorID, a.ThirdPartySource, a.EligibleFuturePayor,
+		a.FLAGS, b, d, a.GrossIncome, a.CreateBy, a.LastModBy}
 	if tx, ok := DBTxFromContext(ctx); ok { // if transaction is supplied
 		stmt := tx.Stmt(RRdb.Prepstmt.InsertPayor)
 		defer stmt.Close()
@@ -2575,10 +2577,15 @@ func InsertProspect(ctx context.Context, a *Prospect) (int64, error) {
 	}
 
 	// transaction... context
-	fields := []interface{}{a.TCID, a.BID, a.EmployerName, a.EmployerStreetAddress, a.EmployerCity,
-		a.EmployerState, a.EmployerPostalCode, a.EmployerEmail, a.EmployerPhone, a.Occupation, a.ApplicationFee,
-		a.DesiredUsageStartDate, a.RentableTypePreference, a.FLAGS, a.Approver, a.DeclineReasonSLSID, a.OtherPreferences,
-		a.FollowUpDate, a.CSAgent, a.OutcomeSLSID, a.FloatingDeposit, a.RAID, a.CreateBy, a.LastModBy}
+	fields := []interface{}{a.TCID, a.BID, a.CompanyAddress, a.CompanyCity,
+		a.CompanyState, a.CompanyPostalCode, a.CompanyEmail, a.CompanyPhone, a.Occupation,
+		a.DesiredUsageStartDate, a.RentableTypePreference, a.FLAGS,
+		a.EvictedDes, a.ConvictedDes, a.BankruptcyDes, a.Approver, a.DeclineReasonSLSID, a.OtherPreferences,
+		a.FollowUpDate, a.CSAgent, a.OutcomeSLSID,
+		a.CurrentAddress, a.CurrentLandLordName, a.CurrentLandLordPhoneNo, a.CurrentReasonForMoving,
+		a.CurrentLengthOfResidency, a.PriorAddress, a.PriorLandLordName, a.PriorLandLordPhoneNo,
+		a.PriorReasonForMoving, a.PriorLengthOfResidency, a.CommissionableThirdParty,
+		a.CreateBy, a.LastModBy}
 	if tx, ok := DBTxFromContext(ctx); ok { // if transaction is supplied
 		stmt := tx.Stmt(RRdb.Prepstmt.InsertProspect)
 		defer stmt.Close()
@@ -2625,7 +2632,9 @@ func InsertUser(ctx context.Context, a *User) (int64, error) {
 	}
 
 	// transaction... context
-	fields := []interface{}{a.TCID, a.BID, a.Points, a.DateofBirth, a.EmergencyContactName, a.EmergencyContactAddress, a.EmergencyContactTelephone, a.EmergencyEmail, a.AlternateAddress, a.EligibleFutureUser, a.Industry, a.SourceSLSID, a.CreateBy, a.LastModBy}
+	fields := []interface{}{a.TCID, a.BID, a.Points, a.DateofBirth, a.EmergencyContactName, a.EmergencyContactAddress,
+		a.EmergencyContactTelephone, a.EmergencyContactEmail, a.AlternateAddress, a.EligibleFutureUser, a.FLAGS, a.Industry,
+		a.SourceSLSID, a.CreateBy, a.LastModBy}
 	if tx, ok := DBTxFromContext(ctx); ok { // if transaction is supplied
 		stmt := tx.Stmt(RRdb.Prepstmt.InsertUser)
 		defer stmt.Close()
@@ -2672,7 +2681,7 @@ func InsertVehicle(ctx context.Context, a *Vehicle) (int64, error) {
 	}
 
 	// transaction... context
-	fields := []interface{}{a.TCID, a.BID, a.VehicleType, a.VehicleMake, a.VehicleModel, a.VehicleColor, a.VehicleYear, a.LicensePlateState, a.LicensePlateNumber, a.ParkingPermitNumber, a.DtStart, a.DtStop, a.CreateBy, a.LastModBy}
+	fields := []interface{}{a.TCID, a.BID, a.VehicleType, a.VehicleMake, a.VehicleModel, a.VehicleColor, a.VehicleYear, a.VIN, a.LicensePlateState, a.LicensePlateNumber, a.ParkingPermitNumber, a.DtStart, a.DtStop, a.CreateBy, a.LastModBy}
 	if tx, ok := DBTxFromContext(ctx); ok { // if transaction is supplied
 		stmt := tx.Stmt(RRdb.Prepstmt.InsertVehicle)
 		defer stmt.Close()

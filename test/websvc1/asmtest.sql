@@ -1,6 +1,6 @@
--- MySQL dump 10.13  Distrib 5.7.22, for osx10.12 (x86_64)
+-- MySQL dump 10.13  Distrib 5.7.22, for Linux (x86_64)
 --
--- Host: localhost    Database: rentroll
+-- Host: 127.0.0.1    Database: rentroll
 -- ------------------------------------------------------
 -- Server version	5.7.22
 
@@ -272,6 +272,36 @@ CREATE TABLE `BusinessPaymentTypes` (
 LOCK TABLES `BusinessPaymentTypes` WRITE;
 /*!40000 ALTER TABLE `BusinessPaymentTypes` DISABLE KEYS */;
 /*!40000 ALTER TABLE `BusinessPaymentTypes` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `BusinessProperties`
+--
+
+DROP TABLE IF EXISTS `BusinessProperties`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `BusinessProperties` (
+  `BPID` bigint(20) NOT NULL AUTO_INCREMENT,
+  `BID` bigint(20) NOT NULL DEFAULT '0',
+  `Name` varchar(100) NOT NULL DEFAULT '',
+  `FLAGS` bigint(20) NOT NULL DEFAULT '0',
+  `Data` json DEFAULT NULL,
+  `LastModTime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `LastModBy` bigint(20) NOT NULL DEFAULT '0',
+  `CreateTS` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `CreateBy` bigint(20) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`BPID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `BusinessProperties`
+--
+
+LOCK TABLES `BusinessProperties` WRITE;
+/*!40000 ALTER TABLE `BusinessProperties` DISABLE KEYS */;
+/*!40000 ALTER TABLE `BusinessProperties` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -596,6 +626,7 @@ CREATE TABLE `Flow` (
   `BID` bigint(20) NOT NULL DEFAULT '0',
   `UserRefNo` varchar(50) NOT NULL DEFAULT '',
   `FlowType` varchar(50) NOT NULL DEFAULT '',
+  `ID` bigint(20) NOT NULL DEFAULT '0',
   `Data` json DEFAULT NULL,
   `LastModTime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `LastModBy` bigint(20) NOT NULL DEFAULT '0',
@@ -631,7 +662,7 @@ CREATE TABLE `GLAccount` (
   `Status` smallint(6) NOT NULL DEFAULT '0',
   `Name` varchar(100) NOT NULL DEFAULT '',
   `AcctType` varchar(100) NOT NULL DEFAULT '',
-  `AllowPost` smallint(6) NOT NULL DEFAULT '0',
+  `AllowPost` tinyint(1) NOT NULL DEFAULT '0',
   `FLAGS` bigint(20) NOT NULL DEFAULT '0',
   `Description` varchar(1024) NOT NULL DEFAULT '',
   `LastModTime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -1176,7 +1207,7 @@ CREATE TABLE `OtherDeliverables` (
   `ODID` bigint(20) NOT NULL AUTO_INCREMENT,
   `BID` bigint(20) NOT NULL DEFAULT '0',
   `Name` varchar(256) DEFAULT NULL,
-  `Active` smallint(6) NOT NULL DEFAULT '0',
+  `Active` tinyint(1) NOT NULL DEFAULT '0',
   `CreateTS` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `CreateBy` bigint(20) NOT NULL DEFAULT '0',
   `LastModTime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -1235,8 +1266,12 @@ CREATE TABLE `Payor` (
   `BID` bigint(20) NOT NULL DEFAULT '0',
   `TaxpayorID` varchar(25) NOT NULL DEFAULT '',
   `CreditLimit` decimal(19,4) NOT NULL DEFAULT '0.0000',
-  `AccountRep` bigint(20) NOT NULL DEFAULT '0',
-  `EligibleFuturePayor` smallint(6) NOT NULL DEFAULT '1',
+  `ThirdPartySource` bigint(20) NOT NULL DEFAULT '0',
+  `EligibleFuturePayor` tinyint(1) NOT NULL DEFAULT '1',
+  `FLAGS` bigint(20) NOT NULL DEFAULT '0',
+  `SSN` char(128) NOT NULL DEFAULT '',
+  `DriversLicense` char(128) NOT NULL DEFAULT '',
+  `GrossIncome` decimal(19,4) NOT NULL DEFAULT '0.0000',
   `LastModTime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `LastModBy` bigint(20) NOT NULL DEFAULT '0',
   `CreateTS` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -1252,7 +1287,7 @@ CREATE TABLE `Payor` (
 
 LOCK TABLES `Payor` WRITE;
 /*!40000 ALTER TABLE `Payor` DISABLE KEYS */;
-INSERT INTO `Payor` VALUES (1,'',0.0000,0,1,'2017-06-13 19:39:18',0,'2017-06-14 18:26:50',0,1),(1,'',0.0000,0,1,'2017-06-13 19:40:59',0,'2017-06-14 18:26:50',0,2),(1,'',0.0000,0,1,'2017-06-15 16:35:44',0,'2017-06-15 16:35:44',0,3),(1,'',0.0000,0,1,'2017-06-15 16:36:27',0,'2017-06-15 16:36:27',0,4),(1,'',0.0000,0,1,'2017-06-15 16:38:32',0,'2017-06-15 16:38:32',0,5),(1,'',0.0000,0,1,'2017-06-15 16:50:13',0,'2017-06-15 16:50:13',0,6);
+INSERT INTO `Payor` VALUES (1,'',0.0000,0,1,0,'','',0.0000,'2017-06-13 19:39:18',0,'2017-06-14 18:26:50',0,1),(1,'',0.0000,0,1,0,'','',0.0000,'2017-06-13 19:40:59',0,'2017-06-14 18:26:50',0,2),(1,'',0.0000,0,1,0,'','',0.0000,'2017-06-15 16:35:44',0,'2017-06-15 16:35:44',0,3),(1,'',0.0000,0,1,0,'','',0.0000,'2017-06-15 16:36:27',0,'2017-06-15 16:36:27',0,4),(1,'',0.0000,0,1,0,'','',0.0000,'2017-06-15 16:38:32',0,'2017-06-15 16:38:32',0,5),(1,'',0.0000,0,1,0,'','',0.0000,'2017-06-15 16:50:13',0,'2017-06-15 16:50:13',0,6);
 /*!40000 ALTER TABLE `Payor` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1265,26 +1300,36 @@ DROP TABLE IF EXISTS `Prospect`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `Prospect` (
   `BID` bigint(20) NOT NULL DEFAULT '0',
-  `EmployerName` varchar(100) NOT NULL DEFAULT '',
-  `EmployerStreetAddress` varchar(100) NOT NULL DEFAULT '',
-  `EmployerCity` varchar(100) NOT NULL DEFAULT '',
-  `EmployerState` varchar(100) NOT NULL DEFAULT '',
-  `EmployerPostalCode` varchar(100) NOT NULL DEFAULT '',
-  `EmployerEmail` varchar(100) NOT NULL DEFAULT '',
-  `EmployerPhone` varchar(100) NOT NULL DEFAULT '',
+  `CompanyAddress` varchar(100) NOT NULL DEFAULT '',
+  `CompanyCity` varchar(100) NOT NULL DEFAULT '',
+  `CompanyState` varchar(100) NOT NULL DEFAULT '',
+  `CompanyPostalCode` varchar(100) NOT NULL DEFAULT '',
+  `CompanyEmail` varchar(100) NOT NULL DEFAULT '',
+  `CompanyPhone` varchar(100) NOT NULL DEFAULT '',
   `Occupation` varchar(100) NOT NULL DEFAULT '',
-  `ApplicationFee` decimal(19,4) NOT NULL DEFAULT '0.0000',
   `DesiredUsageStartDate` date NOT NULL DEFAULT '1970-01-01',
   `RentableTypePreference` bigint(20) NOT NULL DEFAULT '0',
   `FLAGS` bigint(20) NOT NULL DEFAULT '0',
+  `EvictedDes` varchar(2048) NOT NULL DEFAULT '',
+  `ConvictedDes` varchar(2048) NOT NULL DEFAULT '',
+  `BankruptcyDes` varchar(2048) NOT NULL DEFAULT '',
   `Approver` bigint(20) NOT NULL DEFAULT '0',
   `DeclineReasonSLSID` bigint(20) NOT NULL DEFAULT '0',
   `OtherPreferences` varchar(1024) NOT NULL DEFAULT '',
   `FollowUpDate` date NOT NULL DEFAULT '1970-01-01',
   `CSAgent` bigint(20) NOT NULL DEFAULT '0',
   `OutcomeSLSID` bigint(20) NOT NULL DEFAULT '0',
-  `FloatingDeposit` decimal(19,4) NOT NULL DEFAULT '0.0000',
-  `RAID` bigint(20) NOT NULL DEFAULT '0',
+  `CurrentAddress` varchar(200) NOT NULL DEFAULT '',
+  `CurrentLandLordName` varchar(100) NOT NULL DEFAULT '',
+  `CurrentLandLordPhoneNo` varchar(20) NOT NULL DEFAULT '',
+  `CurrentReasonForMoving` bigint(20) NOT NULL DEFAULT '0',
+  `CurrentLengthOfResidency` varchar(100) NOT NULL DEFAULT '',
+  `PriorAddress` varchar(200) NOT NULL DEFAULT '',
+  `PriorLandLordName` varchar(100) NOT NULL DEFAULT '',
+  `PriorLandLordPhoneNo` varchar(20) NOT NULL DEFAULT '',
+  `PriorReasonForMoving` bigint(20) NOT NULL DEFAULT '0',
+  `PriorLengthOfResidency` varchar(100) NOT NULL DEFAULT '',
+  `CommissionableThirdParty` text NOT NULL,
   `LastModTime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `LastModBy` bigint(20) NOT NULL DEFAULT '0',
   `CreateTS` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -1300,7 +1345,7 @@ CREATE TABLE `Prospect` (
 
 LOCK TABLES `Prospect` WRITE;
 /*!40000 ALTER TABLE `Prospect` DISABLE KEYS */;
-INSERT INTO `Prospect` VALUES (1,'','','','','','','','',0.0000,'1900-01-01',0,0,0,0,'','1900-01-01',0,0,0.0000,0,'2017-06-13 19:39:18',0,'2017-06-14 18:26:50',0,1),(1,'','','','','','','','',0.0000,'1900-01-01',0,0,0,0,'','1900-01-01',0,0,0.0000,0,'2017-06-13 19:40:59',0,'2017-06-14 18:26:50',0,2),(1,'','','','','','','','',0.0000,'1900-01-01',0,0,0,0,'','1900-01-01',0,0,0.0000,0,'2017-06-15 16:35:44',0,'2017-06-15 16:35:44',0,3),(1,'','','','','','','','',0.0000,'1900-01-01',0,0,0,0,'','1900-01-01',0,0,0.0000,0,'2017-06-15 16:36:27',0,'2017-06-15 16:36:27',0,4),(1,'','','','','','','','',0.0000,'1900-01-01',0,0,0,0,'','1900-01-01',0,0,0.0000,0,'2017-06-15 16:38:32',0,'2017-06-15 16:38:32',0,5),(1,'','','','','','','','',0.0000,'1900-01-01',0,0,0,0,'','1900-01-01',0,0,0.0000,0,'2017-06-15 16:50:13',0,'2017-06-15 16:50:13',0,6);
+INSERT INTO `Prospect` VALUES (1,'','','','','','','','1900-01-01',0,0,'','','',0,0,'','1900-01-01',0,0,'','','',0,'','','','',0,'','','2017-06-13 19:39:18',0,'2017-06-14 18:26:50',0,1),(1,'','','','','','','','1900-01-01',0,0,'','','',0,0,'','1900-01-01',0,0,'','','',0,'','','','',0,'','','2017-06-13 19:40:59',0,'2017-06-14 18:26:50',0,2),(1,'','','','','','','','1900-01-01',0,0,'','','',0,0,'','1900-01-01',0,0,'','','',0,'','','','',0,'','','2017-06-15 16:35:44',0,'2017-06-15 16:35:44',0,3),(1,'','','','','','','','1900-01-01',0,0,'','','',0,0,'','1900-01-01',0,0,'','','',0,'','','','',0,'','','2017-06-15 16:36:27',0,'2017-06-15 16:36:27',0,4),(1,'','','','','','','','1900-01-01',0,0,'','','',0,0,'','1900-01-01',0,0,'','','',0,'','','','',0,'','','2017-06-15 16:38:32',0,'2017-06-15 16:38:32',0,5),(1,'','','','','','','','1900-01-01',0,0,'','','',0,0,'','1900-01-01',0,0,'','','',0,'','','','',0,'','','2017-06-15 16:50:13',0,'2017-06-15 16:50:13',0,6);
 /*!40000 ALTER TABLE `Prospect` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -2393,7 +2438,7 @@ CREATE TABLE `Transactant` (
   `LastName` varchar(100) NOT NULL DEFAULT '',
   `PreferredName` varchar(100) NOT NULL DEFAULT '',
   `CompanyName` varchar(100) NOT NULL DEFAULT '',
-  `IsCompany` smallint(6) NOT NULL DEFAULT '0',
+  `IsCompany` tinyint(1) NOT NULL DEFAULT '0',
   `PrimaryEmail` varchar(100) NOT NULL DEFAULT '',
   `SecondaryEmail` varchar(100) NOT NULL DEFAULT '',
   `WorkPhone` varchar(100) NOT NULL DEFAULT '',
@@ -2405,6 +2450,8 @@ CREATE TABLE `Transactant` (
   `PostalCode` varchar(100) NOT NULL DEFAULT '',
   `Country` varchar(100) NOT NULL DEFAULT '',
   `Website` varchar(100) NOT NULL DEFAULT '',
+  `FLAGS` bigint(20) NOT NULL DEFAULT '0',
+  `Comment` varchar(2048) NOT NULL DEFAULT '',
   `LastModTime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `LastModBy` bigint(20) NOT NULL DEFAULT '0',
   `CreateTS` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -2419,7 +2466,7 @@ CREATE TABLE `Transactant` (
 
 LOCK TABLES `Transactant` WRITE;
 /*!40000 ALTER TABLE `Transactant` DISABLE KEYS */;
-INSERT INTO `Transactant` VALUES (1,1,0,'Aaron','','Read','','',0,'read.aaron@gmail.com','','','1-469-307-7095','','','','','','','','2017-06-15 16:33:59',0,'2017-06-14 18:26:55',0),(2,1,0,'Kirsten','','Read','','',0,'klmrda@gmail.com','','','1-469-693-9933','','','','','','','','2017-06-15 16:34:39',0,'2017-06-14 18:26:55',0),(3,1,0,'Kevin','','Mills','','',0,'kevinmillsesq@aol.com','','','1-424-234-3535','','','','','','','','2017-06-15 16:35:44',0,'2017-06-15 16:35:44',0),(4,1,0,'Lauren','','Beck','','',0,'laurensbeck@aol.com','','','1-310-948-6442','','','','','','','','2017-06-15 16:36:27',0,'2017-06-15 16:36:27',0),(5,1,0,'Alex','','Vahabzadeh','','Beaumont Partners LLC',0,'av@beaumont-partners.ch','','44-79-203-354-77','1-202-550-2477','118 Rue du Rhone','','1204 Geneva','','','Switzerland','','2017-06-15 16:50:29',0,'2017-06-15 16:38:32',0),(6,1,0,'','','','','Beaumont Partners LLC',1,'av@beaumont-partners.ch','scigler@bvgroup.com','44-79-203-354-77','1-202-550-2477','118 Rue du Rhone','','1204 Geneva','','','Switzerland','','2017-06-15 16:50:13',0,'2017-06-15 16:50:13',0);
+INSERT INTO `Transactant` VALUES (1,1,0,'Aaron','','Read','','',0,'read.aaron@gmail.com','','','1-469-307-7095','','','','','','','',0,'','2017-06-15 16:33:59',0,'2017-06-14 18:26:55',0),(2,1,0,'Kirsten','','Read','','',0,'klmrda@gmail.com','','','1-469-693-9933','','','','','','','',0,'','2017-06-15 16:34:39',0,'2017-06-14 18:26:55',0),(3,1,0,'Kevin','','Mills','','',0,'kevinmillsesq@aol.com','','','1-424-234-3535','','','','','','','',0,'','2017-06-15 16:35:44',0,'2017-06-15 16:35:44',0),(4,1,0,'Lauren','','Beck','','',0,'laurensbeck@aol.com','','','1-310-948-6442','','','','','','','',0,'','2017-06-15 16:36:27',0,'2017-06-15 16:36:27',0),(5,1,0,'Alex','','Vahabzadeh','','Beaumont Partners LLC',0,'av@beaumont-partners.ch','','44-79-203-354-77','1-202-550-2477','118 Rue du Rhone','','1204 Geneva','','','Switzerland','',0,'','2017-06-15 16:50:29',0,'2017-06-15 16:38:32',0),(6,1,0,'','','','','Beaumont Partners LLC',1,'av@beaumont-partners.ch','scigler@bvgroup.com','44-79-203-354-77','1-202-550-2477','118 Rue du Rhone','','1204 Geneva','','','Switzerland','',0,'','2017-06-15 16:50:13',0,'2017-06-15 16:50:13',0);
 /*!40000 ALTER TABLE `Transactant` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -2437,9 +2484,10 @@ CREATE TABLE `User` (
   `EmergencyContactName` varchar(100) NOT NULL DEFAULT '',
   `EmergencyContactAddress` varchar(100) NOT NULL DEFAULT '',
   `EmergencyContactTelephone` varchar(100) NOT NULL DEFAULT '',
-  `EmergencyEmail` varchar(100) NOT NULL DEFAULT '',
+  `EmergencyContactEmail` varchar(100) NOT NULL DEFAULT '',
   `AlternateAddress` varchar(100) NOT NULL DEFAULT '',
-  `EligibleFutureUser` smallint(6) NOT NULL DEFAULT '1',
+  `EligibleFutureUser` tinyint(1) NOT NULL DEFAULT '1',
+  `FLAGS` bigint(20) NOT NULL DEFAULT '0',
   `Industry` varchar(100) NOT NULL DEFAULT '',
   `SourceSLSID` bigint(20) NOT NULL DEFAULT '0',
   `LastModTime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -2457,7 +2505,7 @@ CREATE TABLE `User` (
 
 LOCK TABLES `User` WRITE;
 /*!40000 ALTER TABLE `User` DISABLE KEYS */;
-INSERT INTO `User` VALUES (1,0,'1900-01-01','','','','','',1,'',0,'2017-06-13 19:39:18',0,'2017-06-14 18:26:55',0,1),(1,0,'1900-01-01','','','','','',1,'',0,'2017-06-13 19:40:59',0,'2017-06-14 18:26:55',0,2),(1,0,'1900-01-01','','','','','',1,'',0,'2017-06-15 16:35:44',0,'2017-06-15 16:35:44',0,3),(1,0,'1900-01-01','','','','','',1,'',0,'2017-06-15 16:36:27',0,'2017-06-15 16:36:27',0,4),(1,0,'1900-01-01','','','','','',1,'',0,'2017-06-15 16:38:32',0,'2017-06-15 16:38:32',0,5),(1,0,'1900-01-01','','','','','',1,'',0,'2017-06-15 16:50:13',0,'2017-06-15 16:50:13',0,6);
+INSERT INTO `User` VALUES (1,0,'1900-01-01','','','','','',1,0,'',0,'2017-06-13 19:39:18',0,'2017-06-14 18:26:55',0,1),(1,0,'1900-01-01','','','','','',1,0,'',0,'2017-06-13 19:40:59',0,'2017-06-14 18:26:55',0,2),(1,0,'1900-01-01','','','','','',1,0,'',0,'2017-06-15 16:35:44',0,'2017-06-15 16:35:44',0,3),(1,0,'1900-01-01','','','','','',1,0,'',0,'2017-06-15 16:36:27',0,'2017-06-15 16:36:27',0,4),(1,0,'1900-01-01','','','','','',1,0,'',0,'2017-06-15 16:38:32',0,'2017-06-15 16:38:32',0,5),(1,0,'1900-01-01','','','','','',1,0,'',0,'2017-06-15 16:50:13',0,'2017-06-15 16:50:13',0,6);
 /*!40000 ALTER TABLE `User` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -2477,6 +2525,7 @@ CREATE TABLE `Vehicle` (
   `VehicleModel` varchar(80) NOT NULL DEFAULT '',
   `VehicleColor` varchar(80) NOT NULL DEFAULT '',
   `VehicleYear` bigint(20) NOT NULL DEFAULT '0',
+  `VIN` varchar(20) NOT NULL DEFAULT '',
   `LicensePlateState` varchar(80) NOT NULL DEFAULT '',
   `LicensePlateNumber` varchar(80) NOT NULL DEFAULT '',
   `ParkingPermitNumber` varchar(80) NOT NULL DEFAULT '',
@@ -2508,4 +2557,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2018-06-07 21:03:15
+-- Dump completed on 2018-06-20 14:16:15

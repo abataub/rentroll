@@ -1,6 +1,6 @@
 /*global
    $,addDateNavToToolbar,getCurrentBID,w2ui,w2utils,
-   console,
+   manageParentRentableW2UIItems,RACompConfig, LoadRAFlowTemplate
 */
 
 "use strict";
@@ -53,17 +53,22 @@ window.buildRA2FlowElements = function() {
                 var rec = { cmd: "get"};
                 var dat=JSON.stringify(rec);
                 $.post(url,dat)
-                    .done(function(data) {
-                        if (data.status === "error") {
-                            w2ui.ra2flowGrid.error(w2utils.lang(url + ' failed:  ' + data.message));
-                            return;
-                        }
-                        console.log('data = ' + data);
-                    })
-                    .fail(function(/*data*/){
-                        w2ui.ra2flowGrid.error("Save Tasklist failed.");
+                .done(function(data) {
+                    if (data.status === "error") {
+                        w2ui.ra2flowGrid.error(w2utils.lang(url + ' failed:  ' + data.message));
                         return;
-                    });
+                    }
+
+                    // set the record in app raflow
+                    app.raflow.data[data.record.FlowID]= data.record;
+
+                    // load ra flow template
+                    LoadRAFlowTemplate(bid, data.record.FlowID);
+                })
+                .fail(function(/*data*/){
+                    w2ui.ra2flowGrid.error("Get Rental Agreement Flow failed.");
+                    return;
+                });
             };
         },
     });

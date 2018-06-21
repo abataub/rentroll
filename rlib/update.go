@@ -2,8 +2,27 @@ package rlib
 
 import (
 	"context"
+	"encoding/hex"
 	"extres"
 )
+
+// updateSessionProblem is a convenience function that replaces 8 lines
+// of code with about 4. Since these lines are needed for every update call
+// it saves a lot of lines.  Added this routine at the time Task,TaskList,
+// TaskDescriptor and  TaskListDefinition were added.
+//-----------------------------------------------------------------------------
+func updateSessionProblem(ctx context.Context, id1, id2 *int64) error {
+	if !(RRdb.noAuth && AppConfig.Env != extres.APPENVPROD) {
+		sess, ok := SessionFromContext(ctx)
+		if !ok {
+			return ErrSessionRequired
+		}
+		(*id1) = sess.UID
+		(*id2) = sess.UID
+		return nil
+	}
+	return nil
+}
 
 func updateError(err error, n string, a interface{}) error {
 	if nil != err {
@@ -42,14 +61,8 @@ func UpdateAR(ctx context.Context, a *AR) error {
 func UpdateAssessment(ctx context.Context, a *Assessment) error {
 	var err error
 
-	// session... context
-	if !(RRdb.noAuth && AppConfig.Env != extres.APPENVPROD) {
-		sess, ok := SessionFromContext(ctx)
-		if !ok {
-			return ErrSessionRequired
-		}
-		// user from session, CreateBy, LastModBy
-		a.LastModBy = sess.UID
+	if err = updateSessionProblem(ctx, &a.CreateBy, &a.LastModBy); err != nil {
+		return err
 	}
 
 	a.Amount = Round(a.Amount, .5, 2)
@@ -68,14 +81,8 @@ func UpdateAssessment(ctx context.Context, a *Assessment) error {
 func UpdateBusiness(ctx context.Context, a *Business) error {
 	var err error
 
-	// session... context
-	if !(RRdb.noAuth && AppConfig.Env != extres.APPENVPROD) {
-		sess, ok := SessionFromContext(ctx)
-		if !ok {
-			return ErrSessionRequired
-		}
-		// user from session, CreateBy, LastModBy
-		a.LastModBy = sess.UID
+	if err = updateSessionProblem(ctx, &a.CreateBy, &a.LastModBy); err != nil {
+		return err
 	}
 
 	// TODO(Sudip): keep mind this FLAGS insertion in fields, this might be removed in the future
@@ -92,6 +99,32 @@ func UpdateBusiness(ctx context.Context, a *Business) error {
 	RRdb.BUDlist, RRdb.BizCache = BuildBusinessDesignationMap()
 
 	return updateError(err, "Business", *a)
+}
+
+// UpdateBusinessPropertiesData updates the flow Data json column
+func UpdateBusinessPropertiesData(ctx context.Context, jsonDataKey string, jsonData []byte, a *BusinessProperties) error {
+	var err error
+
+	if err = updateSessionProblem(ctx, &a.CreateBy, &a.LastModBy); err != nil {
+		return err
+	}
+
+	// make sure that json is valid before inserting it in database
+	if !(IsByteDataValidJSON(jsonData)) {
+		return ErrFlowInvalidJSONData
+	}
+
+	// as a.Data is type of json.RawMessage - convert it to byte stream so that it can be inserted
+	// in mysql `json` type column
+	fields := []interface{}{jsonDataKey, jsonData, a.BPID}
+	if tx, ok := DBTxFromContext(ctx); ok { // if transaction is supplied
+		stmt := tx.Stmt(RRdb.Prepstmt.UpdateBusinessPropertiesData)
+		defer stmt.Close()
+		_, err = stmt.Exec(fields...)
+	} else {
+		_, err = RRdb.Prepstmt.UpdateBusinessPropertiesData.Exec(fields...)
+	}
+	return updateError(err, "BusinessProperties", *a)
 }
 
 // UpdateClosePeriod updates an ClosePeriod record
@@ -392,7 +425,7 @@ func UpdateLedger(ctx context.Context, a *GLAccount) error {
 		a.LastModBy = sess.UID
 	}
 
-	fields := []interface{}{a.PLID, a.BID, a.RAID, a.TCID, a.GLNumber, a.Status, a.Name, a.AcctType, a.AllowPost, a.FLAGS, a.Description, a.LastModBy, a.LID}
+	fields := []interface{}{a.PLID, a.BID, a.RAID, a.TCID, a.GLNumber, /*a.Status,*/ a.Name, a.AcctType, a.AllowPost, a.FLAGS, a.Description, a.LastModBy, a.LID}
 	if tx, ok := DBTxFromContext(ctx); ok { // if transaction is supplied
 		stmt := tx.Stmt(RRdb.Prepstmt.UpdateLedger)
 		defer stmt.Close()
@@ -466,8 +499,19 @@ func UpdatePayor(ctx context.Context, a *Payor) error {
 		// user from session, CreateBy, LastModBy
 		a.LastModBy = sess.UID
 	}
+	b1, err := Encrypt(a.SSN)
+	if err != nil {
+		return err
+	}
+	b := hex.EncodeToString(b1)
+	d1, err := Encrypt(a.DriversLicense)
+	if err != nil {
+		return err
+	}
+	d := hex.EncodeToString(d1)
 
-	fields := []interface{}{a.BID, a.CreditLimit, a.TaxpayorID, a.AccountRep, a.EligibleFuturePayor, a.LastModBy, a.TCID}
+	fields := []interface{}{a.BID, a.CreditLimit, a.TaxpayorID, a.ThirdPartySource, a.EligibleFuturePayor,
+		a.FLAGS, b, d, a.GrossIncome, a.LastModBy, a.TCID}
 	if tx, ok := DBTxFromContext(ctx); ok { // if transaction is supplied
 		stmt := tx.Stmt(RRdb.Prepstmt.UpdatePayor)
 		defer stmt.Close()
@@ -492,7 +536,14 @@ func UpdateProspect(ctx context.Context, a *Prospect) error {
 		a.LastModBy = sess.UID
 	}
 
-	fields := []interface{}{a.BID, a.EmployerName, a.EmployerStreetAddress, a.EmployerCity, a.EmployerState, a.EmployerPostalCode, a.EmployerEmail, a.EmployerPhone, a.Occupation, a.ApplicationFee, a.DesiredUsageStartDate, a.RentableTypePreference, a.FLAGS, a.Approver, a.DeclineReasonSLSID, a.OtherPreferences, a.FollowUpDate, a.CSAgent, a.OutcomeSLSID, a.FloatingDeposit, a.RAID, a.LastModBy, a.TCID}
+	fields := []interface{}{a.BID, a.CompanyAddress, a.CompanyCity, a.CompanyState, a.CompanyPostalCode,
+		a.CompanyEmail, a.CompanyPhone, a.Occupation, a.DesiredUsageStartDate, a.RentableTypePreference,
+		a.FLAGS, a.EvictedDes, a.ConvictedDes, a.BankruptcyDes,
+		a.Approver, a.DeclineReasonSLSID, a.OtherPreferences, a.FollowUpDate, a.CSAgent, a.OutcomeSLSID,
+		a.CurrentAddress, a.CurrentLandLordName, a.CurrentLandLordPhoneNo, a.CurrentReasonForMoving,
+		a.CurrentLengthOfResidency, a.PriorAddress, a.PriorLandLordName, a.PriorLandLordPhoneNo,
+		a.PriorReasonForMoving, a.PriorLengthOfResidency, a.CommissionableThirdParty,
+		a.LastModBy, a.TCID}
 	if tx, ok := DBTxFromContext(ctx); ok { // if transaction is supplied
 		stmt := tx.Stmt(RRdb.Prepstmt.UpdateProspect)
 		defer stmt.Close()
@@ -1133,7 +1184,7 @@ func UpdateTask(ctx context.Context, a *Task) error {
 
 	fields := []interface{}{a.BID, a.TLID, a.Name, a.Worker, a.DtDue, a.DtPreDue, a.DtDone, a.DtPreDone, a.FLAGS, a.DoneUID, a.PreDoneUID, a.Comment, a.LastModBy, a.TID}
 	if tx, ok := DBTxFromContext(ctx); ok { // if transaction is supplied
-		stmt := tx.Stmt(RRdb.Prepstmt.UpdateTransactant)
+		stmt := tx.Stmt(RRdb.Prepstmt.UpdateTask)
 		defer stmt.Close()
 		_, err = stmt.Exec(fields...)
 	} else {
@@ -1150,7 +1201,7 @@ func UpdateTaskList(ctx context.Context, a *TaskList) error {
 	}
 	fields := []interface{}{a.BID, a.PTLID, a.TLDID, a.Name, a.Cycle, a.DtDue, a.DtPreDue, a.DtDone, a.DtPreDone, a.FLAGS, a.DoneUID, a.PreDoneUID, a.EmailList, a.DtLastNotify, a.DurWait, a.Comment, a.LastModBy, a.TLID}
 	if tx, ok := DBTxFromContext(ctx); ok { // if transaction is supplied
-		stmt := tx.Stmt(RRdb.Prepstmt.UpdateTransactant)
+		stmt := tx.Stmt(RRdb.Prepstmt.UpdateTaskList)
 		defer stmt.Close()
 		_, err = stmt.Exec(fields...)
 	} else {
@@ -1168,7 +1219,7 @@ func UpdateTaskDescriptor(ctx context.Context, a *TaskDescriptor) error {
 
 	fields := []interface{}{a.BID, a.TLDID, a.Name, a.Worker, a.EpochDue, a.EpochPreDue, a.FLAGS, a.Comment, a.LastModBy, a.TDID}
 	if tx, ok := DBTxFromContext(ctx); ok { // if transaction is supplied
-		stmt := tx.Stmt(RRdb.Prepstmt.UpdateTransactant)
+		stmt := tx.Stmt(RRdb.Prepstmt.UpdateTaskDescriptor)
 		defer stmt.Close()
 		_, err = stmt.Exec(fields...)
 	} else {
@@ -1185,7 +1236,7 @@ func UpdateTaskListDefinition(ctx context.Context, a *TaskListDefinition) error 
 	}
 	fields := []interface{}{a.BID, a.Name, a.Cycle, a.Epoch, a.EpochDue, a.EpochPreDue, a.FLAGS, a.EmailList, a.DurWait, a.Comment, a.LastModBy, a.TLDID}
 	if tx, ok := DBTxFromContext(ctx); ok { // if transaction is supplied
-		stmt := tx.Stmt(RRdb.Prepstmt.UpdateTransactant)
+		stmt := tx.Stmt(RRdb.Prepstmt.UpdateTaskListDefinition)
 		defer stmt.Close()
 		_, err = stmt.Exec(fields...)
 	} else {
@@ -1210,7 +1261,10 @@ func UpdateTransactant(ctx context.Context, a *Transactant) error {
 		a.LastModBy = sess.UID
 	}
 
-	fields := []interface{}{a.BID, a.NLID, a.FirstName, a.MiddleName, a.LastName, a.PreferredName, a.CompanyName, a.IsCompany, a.PrimaryEmail, a.SecondaryEmail, a.WorkPhone, a.CellPhone, a.Address, a.Address2, a.City, a.State, a.PostalCode, a.Country, a.Website, a.LastModBy, a.TCID}
+	fields := []interface{}{a.BID, a.NLID, a.FirstName, a.MiddleName, a.LastName, a.PreferredName,
+		a.CompanyName, a.IsCompany, a.PrimaryEmail, a.SecondaryEmail, a.WorkPhone, a.CellPhone,
+		a.Address, a.Address2, a.City, a.State, a.PostalCode, a.Country, a.Website, a.FLAGS,
+		a.LastModBy, a.TCID}
 	if tx, ok := DBTxFromContext(ctx); ok { // if transaction is supplied
 		stmt := tx.Stmt(RRdb.Prepstmt.UpdateTransactant)
 		defer stmt.Close()
@@ -1235,7 +1289,9 @@ func UpdateUser(ctx context.Context, a *User) error {
 		a.LastModBy = sess.UID
 	}
 
-	fields := []interface{}{a.BID, a.Points, a.DateofBirth, a.EmergencyContactName, a.EmergencyContactAddress, a.EmergencyContactTelephone, a.EmergencyEmail, a.AlternateAddress, a.EligibleFutureUser, a.Industry, a.SourceSLSID, a.LastModBy, a.TCID}
+	fields := []interface{}{a.BID, a.Points, a.DateofBirth, a.EmergencyContactName, a.EmergencyContactAddress,
+		a.EmergencyContactTelephone, a.EmergencyContactEmail, a.AlternateAddress, a.EligibleFutureUser, a.FLAGS,
+		a.Industry, a.SourceSLSID, a.LastModBy, a.TCID}
 	if tx, ok := DBTxFromContext(ctx); ok { // if transaction is supplied
 		stmt := tx.Stmt(RRdb.Prepstmt.UpdateUser)
 		defer stmt.Close()
@@ -1260,7 +1316,9 @@ func UpdateVehicle(ctx context.Context, a *Vehicle) error {
 		a.LastModBy = sess.UID
 	}
 
-	fields := []interface{}{a.TCID, a.BID, a.VehicleType, a.VehicleMake, a.VehicleModel, a.VehicleColor, a.VehicleYear, a.LicensePlateState, a.LicensePlateNumber, a.ParkingPermitNumber, a.DtStart, a.DtStop, a.LastModBy, a.VID}
+	fields := []interface{}{a.TCID, a.BID, a.VehicleType, a.VehicleMake, a.VehicleModel, a.VehicleColor, a.VIN,
+		a.VehicleYear, a.LicensePlateState, a.LicensePlateNumber, a.ParkingPermitNumber, a.DtStart, a.DtStop,
+		a.LastModBy, a.VID}
 	if tx, ok := DBTxFromContext(ctx); ok { // if transaction is supplied
 		stmt := tx.Stmt(RRdb.Prepstmt.UpdateVehicle)
 		defer stmt.Close()

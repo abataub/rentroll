@@ -6,15 +6,20 @@
     getRAFlowAllParts, saveActiveCompData, toggleHaveCheckBoxDisablity, getRAFlowCompData,
     openNewTransactantForm, getRAAddTransactantFormInitRec,
     acceptTransactant, loadRAPeopleForm,
-    setRABGInfoFormHeader, showHideRABGInfoFormFields,
-    setNotRequiredFields, getRATransanctantDetail, getRAPeopleGridRecord,
-    updateRABGInfoFormCheckboxes, getRABGInfoFormInitRecord, loadRABGInfoForm, ReassignPeopleGridRecords,
+    setRATransactantFormHeader, showHideRATransactantFormFields,
+    setNotRequiredFields, getRAPeopleGridRecord,
+    updateRATransactantFormCheckboxes, getRATransactantFormInitRecord, loadRATransactantForm, ReassignPeopleGridRecords,
     manageBGInfoFormFields, addDummyBackgroundInfo, savePeopleCompData, getPeopleLocalData, setPeopleLocalData,
-    getPeopleLocalDataByTCID, setTransactantDefaultRole,
-    savePetsCompData, saveVehiclesCompData, setRAFlowCompData
+    getPeopleLocalDataByTCID, setTransactantDefaultRole, transactantTabs, transactantFields,
+    savePetsCompData, saveVehiclesCompData, setRAFlowCompData, getStringListData, getSLStringList, updateRATransactantFormCheckboxes,
+    managePeopleW2UIItems, removeRAFlowPersonAJAX, saveRAFlowPersonAJAX
 */
 
 "use strict";
+
+/*
+* Note: Reuse method from transactant.js: getStringListData, getSLStringList, updateRATransactantFormCheckboxes
+* */
 
 // -------------------------------------------------------------------------------
 // Rental Agreement - People form, People Grid, Background information form
@@ -47,7 +52,7 @@ window.loadRAPeopleForm = function () {
                             w2ui.RAPeopleForm.record.FirstName = item.FirstName;
                             w2ui.RAPeopleForm.record.LastName = item.LastName;
                             w2ui.RAPeopleForm.record.MiddleName = item.MiddleName;
-                            w2ui.RAPeopleForm.record.Employer = item.Employer;
+                            w2ui.RAPeopleForm.record.CompanyName = item.CompanyName;
                             w2ui.RAPeopleForm.record.IsCompany = item.IsCompany;
                             return s;
                         },
@@ -73,8 +78,8 @@ window.loadRAPeopleForm = function () {
                 {name: 'FirstName', type: 'text', required: false, html: {caption: "FirstName"}},
                 {name: 'LastName', type: 'text', required: false, html: {caption: "LastName"}},
                 {name: 'MiddleName', type: 'text', required: false, html: {caption: "MiddleName"}},
-                {name: 'Employer', type: 'text', required: false, html: {caption: "Employer"}},
-                {name: 'IsCompany', type: 'int', required: true, html: {caption: "IsCompany"}}
+                {name: 'CompanyName', type: 'text', required: false, html: {caption: "CompanyName"}},
+                {name: 'IsCompany', type: 'checkbox', required: true, html: {caption: "IsCompany"}}
             ],
             actions: {
                 reset: function () {
@@ -127,8 +132,8 @@ window.loadRAPeopleForm = function () {
                     size: '100%',
                     style: 'text-align: left;',
                     render: function (record) {
-                        if (record.IsCompany > 0) {
-                            return record.Employer;
+                        if (record.IsCompany) {
+                            return record.CompanyName;
                         } else {
                             return getFullName(record);
                         }
@@ -183,7 +188,9 @@ window.loadRAPeopleForm = function () {
                             return false;
                         },
                         yes_callBack = function (grid, recid) {
-                            var form = w2ui.RABGInfoForm;
+                            var form = w2ui.RATransactantForm,
+                                BID = getCurrentBID(),
+                                BUD = getBUDfromBID(BID);
 
                             app.last.grid_sel_recid = parseInt(recid);
 
@@ -191,6 +198,11 @@ window.loadRAPeopleForm = function () {
                             grid.select(app.last.grid_sel_recid);
 
                             var raBGInfoGridRecord = grid.get(event.recid); // record from the w2ui grid
+
+                            // get stringListData for list fields
+                            getStringListData(BID, BUD).fail(function (data) {
+                                form.message(data.message);
+                            });
 
                             // show slider content in w2ui comp
                             showSliderContentW2UIComp(form, RACompConfig.people.sliderWidth);
@@ -200,9 +212,11 @@ window.loadRAPeopleForm = function () {
 
                             form.record = getPeopleLocalData(raBGInfoGridRecord.TMPTCID);
                             form.record.recid = raBGInfoGridRecord.recid;
+                            form.record.BID = BID;
+                            form.record.BUD = BUD;
 
                             // Set the form title
-                            setRABGInfoFormHeader(form.record);
+                            setRATransactantFormHeader(form.record);
 
                             form.refresh(); // need to refresh for form changes
                         };
@@ -218,10 +232,10 @@ window.loadRAPeopleForm = function () {
 
         // background info form
         $().w2form({
-            name: 'RABGInfoForm',
+            name: 'RATransactantForm',
             header: 'Background Information',
             style: 'border: 0px; background-color: transparent; display: block;',
-            formURL: '/webclient/html/formrabginfo.html',
+            formURL: '/webclient/html/formtc.html',
             toolbar: {
                 items: [
                     {id: 'bt3', type: 'spacer'},
@@ -239,54 +253,8 @@ window.loadRAPeopleForm = function () {
                     }
                 }
             },
-            fields: [
-                {name: 'recid',                     type: 'int',        required: true },
-                {name: 'BID',                       type: 'int',        required: true,     html: {caption: 'BID', page: 0, column: 0}},
-                {name: 'TMPTCID',                   type: 'int',        required: true },
-                {name: 'TCID',                      type: 'int',        required: true,     html: {caption: 'TCID', page: 0, column: 0}},
-                {name: 'IsRenter',                  type: 'checkbox',   required: false },  // will be responsible for paying rent
-                {name: 'IsOccupant',                type: 'checkbox',   required: false },  // will reside in and/or use the items rented
-                {name: 'IsGuarantor',               type: 'checkbox',   required: false },  // responsible for making sure all rent is paid
-                {name: 'FirstName',                 type: 'text',       required: false },
-                {name: 'MiddleName',                type: 'text',       required: false },
-                {name: 'LastName',                  type: 'text',       required: false },
-                {name: 'IsCompany',                 type: 'int',        required: true },
-                {name: 'DateofBirth',               type: 'date',       required: false },  // Date of births of applicants
-                {name: 'SSN',                       type: 'text',       required: false },  // Social security number of applicants
-                {name: 'DriverLicNo',               type: 'text'},                          // Driving licence number of applicants
-                {name: 'CellPhone',                 type: 'text',       required: false },  // Telephone no of applicants
-                {name: 'PrimaryEmail',              type: 'email',      required: false },  // Email Address of applicants
-                {name: 'CurrentAddress',            type: 'text',       required: false },  // Current Address
-                {name: 'CurrentLandLordName',       type: 'text',       required: false },  // Current landlord's name
-                {name: 'CurrentLandLordPhoneNo',    type: 'text',       required: false },  // Current landlord's phone number
-                {name: 'CurrentLengthOfResidency',  type: 'int',        required: false },  // Length of residency at current address
-                {name: 'CurrentReasonForMoving',    type: 'text',       required: false },  // Reason of moving from current address
-                {name: 'PriorAddress',              type: 'text'},                          // Prior Address
-                {name: 'PriorLandLordName',         type: 'text'},                          // Prior landlord's name
-                {name: 'PriorLandLordPhoneNo',      type: 'text'},                          // Prior landlord's phone number
-                {name: 'PriorLengthOfResidency',    type: 'int'},                           // Length of residency at Prior address
-                {name: 'PriorReasonForMoving',      type: 'text'},                          // Reason of moving from Prior address
-                {name: 'Evicted',                   type: 'checkbox',   required: false },  // have you ever been Evicted
-                {name: 'EvictedDes',                type: 'text',       required: false },
-                {name: 'Convicted',                 type: 'checkbox',   required: false },  // have you ever been Arrested or convicted of a crime
-                {name: 'ConvictedDes',              type: 'text',       required: false },
-                {name: 'Bankruptcy',                type: 'checkbox',   required: false },  // have you ever been Declared Bankruptcy
-                {name: 'BankruptcyDes',             type: 'text',       required: false },
-                {name: 'Employer',                  type: 'text',       required: false },
-                {name: 'WorkPhone',                 type: 'text',       required: false },
-                {name: 'Address',                   type: 'text',       required: false },
-                {name: 'Address2',                  type: 'text',       required: false },
-                {name: 'City',                      type: 'text',       required: false },
-                {name: 'State',                     type: 'list',       required: false,    options: {items: app.usStateAbbr}, },
-                {name: 'PostalCode',                type: 'text',       required: false },
-                {name: 'Country',                   type: 'text',       required: false },
-                {name: 'Position',                  type: 'text',       required: false },
-                {name: 'GrossIncome',               type: 'money',      required: false },
-                {name: 'Comment',                   type: 'text'},                          // In an effort to accommodate you, please advise us of any special needs
-                {name: 'EmergencyContactName',      type: 'text',       required: false },  // Name of emergency contact
-                {name: 'EmergencyContactPhone',     type: 'text',       required: false },  // Phone number of emergency contact
-                {name: 'EmergencyContactAddress',   type: 'text',       required: false }   // Address of emergency contact
-            ],
+            fields: app.transactantFields,
+            tabs: app.transactantTabs,
             actions: {
                 save: function () {
                     var form = this,
@@ -304,7 +272,7 @@ window.loadRAPeopleForm = function () {
                     }
 
                     // Convert integer to bool checkboxes fields
-                    updateRABGInfoFormCheckboxes(peopleData);
+                    updateRATransactantFormCheckboxes(peopleData);
 
                     setPeopleLocalData(TMPTCID, peopleData);
 
@@ -328,51 +296,18 @@ window.loadRAPeopleForm = function () {
                         }
                     })
                     .fail(function (data) {
-                        console.log("failure " + data);
+                        console.error("failure " + data);
                     });
                 },
                 delete: function () {
                     var form = this;
-                    var TCID = form.record.TCID;
+                    var TMPTCID = form.record.TMPTCID;
 
-                    // get local data from TMPPETID
-                    var compData = getRAFlowCompData("people", app.raflow.activeFlowID) || [];
-                    var itemIndex = getPeopleLocalData(form.record.TMPTCID, true);
-                    compData.splice(itemIndex, 1);
-
-                    savePeopleCompData()
-                    .done(function (data) {
+                    removeRAFlowPersonAJAX(TMPTCID)
+                    .done(function(data) {
                         if (data.status === 'success') {
-
+                            // clear the form
                             form.clear();
-
-                            // now if this is existed transactanct then remove
-                            // pets, vehicles too associated with it.
-                            if (TCID > 0) {
-                                // 1. pets
-                                var petsCompData = getRAFlowCompData("pets", app.raflow.activeFlowID) || [];
-                                petsCompData = petsCompData.filter(function(petItem) {
-                                    return petItem.TCID != TCID;
-                                });
-
-                                // set data locally
-                                setRAFlowCompData("pets", app.raflow.activeFlowID, petsCompData);
-
-                                // save data on server
-                                savePetsCompData();
-
-                                // 2. vehicles
-                                var vehiclesCompData = getRAFlowCompData("vehicles", app.raflow.activeFlowID) || [];
-                                vehiclesCompData = vehiclesCompData.filter(function(vehicleItem) {
-                                    return vehicleItem.TCID != TCID;
-                                });
-
-                                // set data locally
-                                setRAFlowCompData("vehicles", app.raflow.activeFlowID, vehiclesCompData);
-
-                                // save data on server
-                                saveVehiclesCompData();
-                            }
 
                             // update RAPeopleGrid
                             ReassignPeopleGridRecords();
@@ -384,11 +319,11 @@ window.loadRAPeopleForm = function () {
                         }
                     })
                     .fail(function (data) {
-                        console.log("failure " + data);
+                        console.error("failure " + data);
                     });
                 },
                 reset: function () {
-                    w2ui.RABGInfoForm.clear();
+                    w2ui.RATransactantForm.clear();
                 }
             },
             onChange: function (event) {
@@ -412,8 +347,17 @@ window.loadRAPeopleForm = function () {
                 };
             },
             onRefresh: function (event) {
-                var form = this;
                 event.onComplete = function () {
+                    var form = this,
+                        BID = getCurrentBID(),
+                        BUD = getBUDfromBID(BID);
+
+                    // Set list field value
+                    form.get('SourceSLSID').options.items = getSLStringList(BID, "HowFound");
+                    form.get('DeclineReasonSLSID').options.items = getSLStringList(BID, "ApplDeny");
+                    form.get('CurrentReasonForMoving').options.items = getSLStringList(BID, "WhyLeaving");
+                    form.get('PriorReasonForMoving').options.items = getSLStringList(BID, "WhyLeaving");
+
                     // hide delete button if it is NewRecord
                     var isNewRecord = (w2ui.RAPeopleGrid.get(form.record.recid, true) === null);
                     if (isNewRecord) {
@@ -426,6 +370,26 @@ window.loadRAPeopleForm = function () {
                     $("#ConvictedDes").prop("disabled", !this.record.Convicted);
                     $("#BankruptcyDes").prop("disabled", !this.record.Bankruptcy);
                 };
+            },
+            onValidate: function (event) {
+                if (!this.record.IsCompany && this.record.FirstName === '') {
+                    event.errors.push({
+                        field: this.get('FirstName'),
+                        error: 'FirstName required when "Person or Company" field is set to Person'
+                    });
+                }
+                if (!this.record.IsCompany && this.record.LastName === '') {
+                    event.errors.push({
+                        field: this.get('LastName'),
+                        error: 'LastName required when "Person or Company" field is set to Person'
+                    });
+                }
+                if (this.record.IsCompany && this.record.CompanyName === '') {
+                    event.errors.push({
+                        field: this.get('CompanyName'),
+                        error: 'Company Name required when "Person or Company" field is set to Company'
+                    });
+                }
             }
         });
     }
@@ -441,19 +405,19 @@ window.loadRAPeopleForm = function () {
     }, 500);
 };
 
-// setRABGInfoFormHeader
-// It set RABGInfoForm header title
-window.setRABGInfoFormHeader = function (record) {
+// setRATransactantFormHeader
+// It set RATransactantForm header title
+window.setRATransactantFormHeader = function (record) {
     if (record.IsCompany > 0) {
-        w2ui.RABGInfoForm.header = 'Background Information - ' + record.Employer;
+        w2ui.RATransactantForm.header = 'Background Information - ' + record.CompanyName;
     } else {
-        w2ui.RABGInfoForm.header = 'Background Information - ' + record.FirstName + ' ' + record.MiddleName + ' ' + record.LastName;
+        w2ui.RATransactantForm.header = 'Background Information - ' + record.FirstName + ' ' + record.MiddleName + ' ' + record.LastName;
     }
 };
 
-// showHideRABGInfoFormFields
+// showHideRATransactantFormFields
 // hide fields if transanctant is only user
-window.showHideRABGInfoFormFields = function (listOfHiddenFields, hidden) {
+window.showHideRATransactantFormFields = function (listOfHiddenFields, hidden) {
     if (hidden) {
         $("#cureentInfolabel").hide();
         $("#priorInfolabel").hide();
@@ -462,7 +426,7 @@ window.showHideRABGInfoFormFields = function (listOfHiddenFields, hidden) {
         $("#priorInfolabel").show();
     }
     for (var fieldIndex = 0; fieldIndex < listOfHiddenFields.length; fieldIndex++) {
-        w2ui.RABGInfoForm.get(listOfHiddenFields[fieldIndex]).hidden = hidden;
+        w2ui.RATransactantForm.get(listOfHiddenFields[fieldIndex]).hidden = hidden;
     }
 };
 
@@ -470,24 +434,23 @@ window.showHideRABGInfoFormFields = function (listOfHiddenFields, hidden) {
 // define fields are not required if transanctant is only user
 window.setNotRequiredFields = function (listOfNotRequiredFields, required) {
     for (var fieldIndex = 0; fieldIndex < listOfNotRequiredFields.length; fieldIndex++) {
-        w2ui.RABGInfoForm.get(listOfNotRequiredFields[fieldIndex]).required = required;
+        w2ui.RATransactantForm.get(listOfNotRequiredFields[fieldIndex]).required = required;
     }
 };
 
-// getRATransanctantDetail
-// get Transanctant detail from the server
-window.getRATransanctantDetail = function (TCID) {
+// remove person with associated pets, vehicles from json data via Ajax
+window.removeRAFlowPersonAJAX = function (TMPTCID) {
     var bid = getCurrentBID();
 
     // temporary data
     var data = {
-        "TCID": TCID,
+        "cmd": "delete",
+        "TMPTCID": TMPTCID,
         "FlowID": app.raflow.activeFlowID
     };
 
-
     return $.ajax({
-        url: "/v1/raflow-persondetails/" + bid.toString() + "/" + app.raflow.activeFlowID.toString(),
+        url: "/v1/raflow-person/" + bid.toString() + "/" + app.raflow.activeFlowID.toString(),
         method: "POST",
         contentType: "application/json",
         dataType: "json",
@@ -501,7 +464,38 @@ window.getRATransanctantDetail = function (TCID) {
             }
         },
         error: function () {
-            console.log("Error:" + JSON.stringify(data));
+            console.error("Error:" + JSON.stringify(data));
+        }
+    });
+};
+
+// save Transanctant in raflow
+window.saveRAFlowPersonAJAX = function (TCID) {
+    var bid = getCurrentBID();
+
+    // temporary data
+    var data = {
+        "cmd": "save",
+        "TCID": TCID,
+        "FlowID": app.raflow.activeFlowID
+    };
+
+    return $.ajax({
+        url: "/v1/raflow-person/" + bid.toString() + "/" + app.raflow.activeFlowID.toString(),
+        method: "POST",
+        contentType: "application/json",
+        dataType: "json",
+        data: JSON.stringify(data),
+        success: function (data) {
+            if (data.status != "error") {
+                // update the local copy of flow for the active one
+                app.raflow.data[data.record.FlowID] = data.record;
+            } else {
+                console.error(data.message);
+            }
+        },
+        error: function () {
+            console.error("Error:" + JSON.stringify(data));
         }
     });
 };
@@ -519,73 +513,6 @@ window.getRAPeopleGridRecord = function (records, TCID) {
     return raBGInfoGridrecord;
 };
 
-// updateRABGInfoFormCheckboxes
-// Convert checkboxes w2ui int(1/0) value to bool(true/false)
-window.updateRABGInfoFormCheckboxes = function (record) {
-    record.IsRenter = int_to_bool(record.IsRenter);
-    record.IsOccupant = int_to_bool(record.IsOccupant);
-    record.IsGuarantor = int_to_bool(record.IsGuarantor);
-
-    // record.IsCompany = int_to_bool(record.IsCompany);
-
-    record.Evicted = int_to_bool(record.Evicted);
-    record.Bankruptcy = int_to_bool(record.Bankruptcy);
-    record.Convicted = int_to_bool(record.Convicted);
-};
-
-//
-window.getRABGInfoFormInitRecord = function (BID, TCID, RECID) {
-
-    return {
-        recid: RECID,
-        TMPTCID: 0,
-        TCID: TCID,
-        BID: BID,
-        IsRenter: false,
-        IsOccupant: true,
-        IsGuarantor: false,
-        FirstName: "",
-        MiddleName: "",
-        LastName: "",
-        IsCompany: 0,
-        DateofBirth: "",
-        SSN: "",
-        DriverLicNo: "",
-        CellPhone: "",
-        PrimaryEmail: "",
-        CurrentAddress: "",
-        CurrentLandLordName: "",
-        CurrentLandLordPhoneNo: "",
-        CurrentLengthOfResidency: 0,
-        CurrentReasonForMoving: "",
-        PriorAddress: "",
-        PriorLandLordName: "",
-        PriorLandLordPhoneNo: "",
-        PriorLengthOfResidency: 0,
-        PriorReasonForMoving: "",
-        Evicted: false,
-        EvictedDes: "",
-        Convicted: false,
-        ConvictedDes: "",
-        Bankruptcy: false,
-        BankruptcyDes: "",
-        Employer: "",
-        WorkPhone: "",
-        Address: "",
-        Address2: "",
-        City: "",
-        State: "",
-        PostalCode: "",
-        Country: "",
-        Position: "",
-        GrossIncome: 0,
-        Comment: "",
-        EmergencyContactName: "",
-        EmergencyContactPhone: "",
-        EmergencyContactAddress: ""
-    };
-};
-
 //--------------------------------------------------------------------
 // ReassignPeopleGridRecords
 //--------------------------------------------------------------------
@@ -599,6 +526,10 @@ window.ReassignPeopleGridRecords = function () {
 
         // Operation on RAPeopleForm
         w2ui.RAPeopleForm.refresh();
+
+        // manage people w2ui items list
+        managePeopleW2UIItems();
+
     } else {
         // Operation on RAPeopleForm
         w2ui.RAPeopleForm.actions.reset();
@@ -613,20 +544,21 @@ window.ReassignPeopleGridRecords = function () {
 //-----------------------------------------------------------------------------
 window.openNewTransactantForm = function () {
     var BID = getCurrentBID(),
-        BUD = getBUDfromBID(BID);
+        BUD = getBUDfromBID(BID),
+        form = w2ui.RATransactantForm;
 
-    // For new form TCID is 0
-    var TCID = 0;
-    var recid = w2ui.RAPeopleGrid.records.length + 1;
+    form.header = 'Background Information';
+    form.record = getTransactantInitRecord(BID, BUD);
+    setTransactantDefaultRole(form.record);
 
-    w2ui.RABGInfoForm.header = 'Background Information';
-    w2ui.RABGInfoForm.record = getRABGInfoFormInitRecord(BID, TCID, recid);
+    // get stringListData for list fields
+    getStringListData(BID, BUD).fail(function (data) {
+        form.message(data.message);
+    });
 
-	setTransactantDefaultRole(w2ui.RABGInfoForm.record);
+    showSliderContentW2UIComp(form, RACompConfig.people.sliderWidth);
 
-    showSliderContentW2UIComp(w2ui.RABGInfoForm, RACompConfig.people.sliderWidth);
-
-    w2ui.RABGInfoForm.refresh(); // need to refresh for header changes
+    form.refresh(); // need to refresh for header changes
 };
 
 //-----------------------------------------------------------------------------
@@ -652,8 +584,8 @@ window.acceptTransactant = function () {
     // if not found then push it in the data
     if (tcidIndex < 0) {
 
-        // get transanctant information from the server
-        getRATransanctantDetail(TCID)
+        // save transanctant information in raflow json
+        saveRAFlowPersonAJAX(TCID)
         .done(function (data) {
 
             if (data.status === 'success') {
@@ -665,11 +597,11 @@ window.acceptTransactant = function () {
                 w2ui.RAPeopleForm.actions.reset();
 
             } else {
-                console.log(data.message);
+                console.error(data.message);
             }
         })
         .fail(function (data) {
-            console.log("failure" + data);
+            console.error("failure" + data);
         });
     } else {
         var recid = compData[tcidIndex].recid;
@@ -694,18 +626,18 @@ window.manageBGInfoFormFields = function (record) {
     // Display/Required field based on transanctant type
     var haveToHide = record.IsOccupant && !record.IsRenter && !record.IsGuarantor; // true: hide fields, false: show fields
     // hide/show fields
-    showHideRABGInfoFormFields(listOfHiddenFields, haveToHide);
+    showHideRATransactantFormFields(listOfHiddenFields, haveToHide);
 };
 
 window.addDummyBackgroundInfo = function () {
-    var form = w2ui.RABGInfoForm;
+    var form = w2ui.RATransactantForm;
     var record = form.record;
     record.FirstName = Math.random().toString(32).slice(2);
     record.MiddleName = Math.random().toString(32).slice(2);
     record.LastName = Math.random().toString(32).slice(2);
     record.DateofBirth = "8/30/1990";
     record.SSN = Math.random().toString(32).slice(4);
-    record.DriverLicNo = Math.random().toString(32).slice(2);
+    record.DriversLicense = Math.random().toString(32).slice(2);
     record.CellPhone = Math.random().toString(32).slice(2);
     record.PrimaryEmail = Math.random().toString(32).slice(2) + "@yopmail.com";
     record.CurrentAddress = Math.random().toString(32).slice(2);
@@ -716,9 +648,9 @@ window.addDummyBackgroundInfo = function () {
     record.PriorAddress = Math.random().toString(32).slice(2);
     record.PriorLandLordName = Math.random().toString(32).slice(2);
     record.PriorLandLordPhoneNo = Math.random().toString(32).slice(2);
-    record.PriorLengthOfResidency = 36;
+    record.PriorLengthOfResidency = "3 years";
     record.PriorReasonForMoving = Math.random().toString(32).slice(2);
-    record.Employer = Math.random().toString(32).slice(2);
+    record.CompanyName = Math.random().toString(32).slice(2);
     record.WorkPhone = Math.random().toString(32).slice(2);
     record.Address = Math.random().toString(32).slice(2);
     record.Position = Math.random().toString(32).slice(2);
@@ -816,3 +748,69 @@ window.setTransactantDefaultRole = function (transactantRec) {
 	// Each transactant must be occupant by default. It can be change via BGInfo detail form
 	transactantRec.IsOccupant = true;
 };
+
+//-------------------------------------------------------------------------------
+// managePeopleW2UIItems - maintain people w2ui items list
+//                       - it will keep TMPTCID as in id of w2ui list item object
+//-------------------------------------------------------------------------------
+window.managePeopleW2UIItems = function() {
+
+    // reset it first
+    app.raflow.peopleW2UIItems = [];
+
+    // inner function to push item in "app.raflow.peopleW2UIItems"
+    var pushItem = function(peopleItem, atIndex) {
+        var found = false;
+        app.raflow.peopleW2UIItems.forEach(function(item) {
+            if (item.id === peopleItem.id) {
+                found = true;
+                return false;
+            }
+        });
+
+        // if not found the push item in app.raflow.peopleW2UIItems
+        if (!found) {
+            // deleting 0 item, then insert peopleItem
+            app.raflow.peopleW2UIItems.splice(atIndex, 0, peopleItem);
+        }
+    };
+
+    // get comp data
+    var peopleCompData = getRAFlowCompData("people", app.raflow.activeFlowID) || [];
+
+    // first build the list of rentables and sort it out in asc order of TMPTCID
+    peopleCompData.forEach(function(peopleItem) {
+        var TMPTCID = peopleItem.TMPTCID,
+            Name = "";
+
+        // get name
+        if (peopleItem.IsCompany) {
+            Name = peopleItem.CompanyName;
+        } else {
+            Name = getFullName(peopleItem);
+        }
+
+        // w2ui list item for people list
+        var item = {id: TMPTCID, text: Name};
+        pushItem(item, app.raflow.peopleW2UIItems.length);
+    });
+
+    // sort it out in asc order of TMPTCID value
+    app.raflow.peopleW2UIItems.sort(function(a, b) {
+        return a.id - b.id;
+    });
+
+    // if there is only one parent rentable then pre-select it for all child rentable
+    // otherwise built drop down menu
+    if (app.raflow.peopleW2UIItems.length != 1) {
+        var item = {id: 0, text: " -- select person -- "};
+        pushItem(item, 0);
+    } else {
+        app.raflow.peopleW2UIItems.forEach(function(item, index) {
+            if (item.id === 0) {
+                app.raflow.peopleW2UIItems.splice(index, 1);
+            }
+        });
+    }
+};
+

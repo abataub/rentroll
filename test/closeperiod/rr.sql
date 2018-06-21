@@ -1,6 +1,6 @@
--- MySQL dump 10.13  Distrib 5.7.22, for osx10.12 (x86_64)
+-- MySQL dump 10.13  Distrib 5.7.22, for Linux (x86_64)
 --
--- Host: localhost    Database: rentroll
+-- Host: 127.0.0.1    Database: rentroll
 -- ------------------------------------------------------
 -- Server version	5.7.22
 
@@ -273,6 +273,36 @@ CREATE TABLE `BusinessPaymentTypes` (
 LOCK TABLES `BusinessPaymentTypes` WRITE;
 /*!40000 ALTER TABLE `BusinessPaymentTypes` DISABLE KEYS */;
 /*!40000 ALTER TABLE `BusinessPaymentTypes` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `BusinessProperties`
+--
+
+DROP TABLE IF EXISTS `BusinessProperties`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `BusinessProperties` (
+  `BPID` bigint(20) NOT NULL AUTO_INCREMENT,
+  `BID` bigint(20) NOT NULL DEFAULT '0',
+  `Name` varchar(100) NOT NULL DEFAULT '',
+  `FLAGS` bigint(20) NOT NULL DEFAULT '0',
+  `Data` json DEFAULT NULL,
+  `LastModTime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `LastModBy` bigint(20) NOT NULL DEFAULT '0',
+  `CreateTS` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `CreateBy` bigint(20) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`BPID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `BusinessProperties`
+--
+
+LOCK TABLES `BusinessProperties` WRITE;
+/*!40000 ALTER TABLE `BusinessProperties` DISABLE KEYS */;
+/*!40000 ALTER TABLE `BusinessProperties` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -599,6 +629,7 @@ CREATE TABLE `Flow` (
   `BID` bigint(20) NOT NULL DEFAULT '0',
   `UserRefNo` varchar(50) NOT NULL DEFAULT '',
   `FlowType` varchar(50) NOT NULL DEFAULT '',
+  `ID` bigint(20) NOT NULL DEFAULT '0',
   `Data` json DEFAULT NULL,
   `LastModTime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `LastModBy` bigint(20) NOT NULL DEFAULT '0',
@@ -634,7 +665,7 @@ CREATE TABLE `GLAccount` (
   `Status` smallint(6) NOT NULL DEFAULT '0',
   `Name` varchar(100) NOT NULL DEFAULT '',
   `AcctType` varchar(100) NOT NULL DEFAULT '',
-  `AllowPost` smallint(6) NOT NULL DEFAULT '0',
+  `AllowPost` tinyint(1) NOT NULL DEFAULT '0',
   `FLAGS` bigint(20) NOT NULL DEFAULT '0',
   `Description` varchar(1024) NOT NULL DEFAULT '',
   `LastModTime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -1182,7 +1213,7 @@ CREATE TABLE `OtherDeliverables` (
   `ODID` bigint(20) NOT NULL AUTO_INCREMENT,
   `BID` bigint(20) NOT NULL DEFAULT '0',
   `Name` varchar(256) DEFAULT NULL,
-  `Active` smallint(6) NOT NULL DEFAULT '0',
+  `Active` tinyint(1) NOT NULL DEFAULT '0',
   `LastModTime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `LastModBy` bigint(20) NOT NULL DEFAULT '0',
   `CreateTS` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -1242,8 +1273,12 @@ CREATE TABLE `Payor` (
   `BID` bigint(20) NOT NULL DEFAULT '0',
   `TaxpayorID` varchar(25) NOT NULL DEFAULT '',
   `CreditLimit` decimal(19,4) NOT NULL DEFAULT '0.0000',
-  `AccountRep` bigint(20) NOT NULL DEFAULT '0',
-  `EligibleFuturePayor` smallint(6) NOT NULL DEFAULT '1',
+  `ThirdPartySource` bigint(20) NOT NULL DEFAULT '0',
+  `EligibleFuturePayor` tinyint(1) NOT NULL DEFAULT '1',
+  `FLAGS` bigint(20) NOT NULL DEFAULT '0',
+  `SSN` char(128) NOT NULL DEFAULT '',
+  `DriversLicense` char(128) NOT NULL DEFAULT '',
+  `GrossIncome` decimal(19,4) NOT NULL DEFAULT '0.0000',
   `LastModTime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `LastModBy` bigint(20) NOT NULL DEFAULT '0',
   `CreateTS` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -1271,26 +1306,36 @@ DROP TABLE IF EXISTS `Prospect`;
 CREATE TABLE `Prospect` (
   `TCID` bigint(20) NOT NULL,
   `BID` bigint(20) NOT NULL DEFAULT '0',
-  `EmployerName` varchar(100) NOT NULL DEFAULT '',
-  `EmployerStreetAddress` varchar(100) NOT NULL DEFAULT '',
-  `EmployerCity` varchar(100) NOT NULL DEFAULT '',
-  `EmployerState` varchar(100) NOT NULL DEFAULT '',
-  `EmployerPostalCode` varchar(100) NOT NULL DEFAULT '',
-  `EmployerEmail` varchar(100) NOT NULL DEFAULT '',
-  `EmployerPhone` varchar(100) NOT NULL DEFAULT '',
+  `CompanyAddress` varchar(100) NOT NULL DEFAULT '',
+  `CompanyCity` varchar(100) NOT NULL DEFAULT '',
+  `CompanyState` varchar(100) NOT NULL DEFAULT '',
+  `CompanyPostalCode` varchar(100) NOT NULL DEFAULT '',
+  `CompanyEmail` varchar(100) NOT NULL DEFAULT '',
+  `CompanyPhone` varchar(100) NOT NULL DEFAULT '',
   `Occupation` varchar(100) NOT NULL DEFAULT '',
-  `ApplicationFee` decimal(19,4) NOT NULL DEFAULT '0.0000',
   `DesiredUsageStartDate` date NOT NULL DEFAULT '1970-01-01',
   `RentableTypePreference` bigint(20) NOT NULL DEFAULT '0',
   `FLAGS` bigint(20) NOT NULL DEFAULT '0',
+  `EvictedDes` varchar(2048) NOT NULL DEFAULT '',
+  `ConvictedDes` varchar(2048) NOT NULL DEFAULT '',
+  `BankruptcyDes` varchar(2048) NOT NULL DEFAULT '',
   `Approver` bigint(20) NOT NULL DEFAULT '0',
   `DeclineReasonSLSID` bigint(20) NOT NULL DEFAULT '0',
   `OtherPreferences` varchar(1024) NOT NULL DEFAULT '',
   `FollowUpDate` date NOT NULL DEFAULT '1970-01-01',
   `CSAgent` bigint(20) NOT NULL DEFAULT '0',
   `OutcomeSLSID` bigint(20) NOT NULL DEFAULT '0',
-  `FloatingDeposit` decimal(19,4) NOT NULL DEFAULT '0.0000',
-  `RAID` bigint(20) NOT NULL DEFAULT '0',
+  `CurrentAddress` varchar(200) NOT NULL DEFAULT '',
+  `CurrentLandLordName` varchar(100) NOT NULL DEFAULT '',
+  `CurrentLandLordPhoneNo` varchar(20) NOT NULL DEFAULT '',
+  `CurrentReasonForMoving` bigint(20) NOT NULL DEFAULT '0',
+  `CurrentLengthOfResidency` varchar(100) NOT NULL DEFAULT '',
+  `PriorAddress` varchar(200) NOT NULL DEFAULT '',
+  `PriorLandLordName` varchar(100) NOT NULL DEFAULT '',
+  `PriorLandLordPhoneNo` varchar(20) NOT NULL DEFAULT '',
+  `PriorReasonForMoving` bigint(20) NOT NULL DEFAULT '0',
+  `PriorLengthOfResidency` varchar(100) NOT NULL DEFAULT '',
+  `CommissionableThirdParty` text NOT NULL,
   `LastModTime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `LastModBy` bigint(20) NOT NULL DEFAULT '0',
   `CreateTS` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -2406,7 +2451,7 @@ CREATE TABLE `Transactant` (
   `LastName` varchar(100) NOT NULL DEFAULT '',
   `PreferredName` varchar(100) NOT NULL DEFAULT '',
   `CompanyName` varchar(100) NOT NULL DEFAULT '',
-  `IsCompany` smallint(6) NOT NULL DEFAULT '0',
+  `IsCompany` tinyint(1) NOT NULL DEFAULT '0',
   `PrimaryEmail` varchar(100) NOT NULL DEFAULT '',
   `SecondaryEmail` varchar(100) NOT NULL DEFAULT '',
   `WorkPhone` varchar(100) NOT NULL DEFAULT '',
@@ -2418,6 +2463,8 @@ CREATE TABLE `Transactant` (
   `PostalCode` varchar(100) NOT NULL DEFAULT '',
   `Country` varchar(100) NOT NULL DEFAULT '',
   `Website` varchar(100) NOT NULL DEFAULT '',
+  `FLAGS` bigint(20) NOT NULL DEFAULT '0',
+  `Comment` varchar(2048) NOT NULL DEFAULT '',
   `LastModTime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `LastModBy` bigint(20) NOT NULL DEFAULT '0',
   `CreateTS` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -2432,7 +2479,7 @@ CREATE TABLE `Transactant` (
 
 LOCK TABLES `Transactant` WRITE;
 /*!40000 ALTER TABLE `Transactant` DISABLE KEYS */;
-INSERT INTO `Transactant` VALUES (1,1,0,'Nakia','Emerald','Horton','Amado','Amtran, Inc.',0,'NHorton7376@yahoo.com','NakiaH4987@abiz.com','(277) 733-0360','(106) 333-7498','7929 Fifth','','Orlando','TN','98081','USA','','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(2,1,0,'Tynisha','Tayna','Hogan','Sherell','Dollar Tree Stores, Inc.',0,'THogan4998@comcast.net','TynishaH1055@yahoo.com','(386) 706-2316','(742) 282-6041','35539 Canyon','','Syracuse','GA','27887','USA','','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(3,1,0,'Dionna','Renata','Leon','Debrah','Teradyne Inc',0,'DionnaLeon640@hotmail.com','DionnaLeon211@comcast.net','(819) 196-7847','(379) 779-6762','58105 Orchard','','Trenton','NJ','31847','USA','','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(4,1,0,'Ruthe','Margie','Chapman','Breann','ALLETE, Inc.',0,'RChapman5026@bdiddy.com','RChapman6485@hotmail.com','(247) 965-1936','(615) 751-3944','23903 Sixth','','Apple Valley','KY','84059','USA','','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(5,1,0,'Darryl','Solomon','Hammond','Omar','Protective Life Corp',0,'DHammond7290@hotmail.com','DHammond6836@aol.com','(563) 789-7432','(607) 756-3940','66294 Sunset','','Laredo','NV','02081','USA','','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(6,1,0,'Ahmad','Anthony','Rich','Florentino','Mail-Well Inc.',0,'ARich5757@hotmail.com','AhmadR2721@abiz.com','(387) 951-2223','(385) 191-6004','70237 Zoo','','Coral Springs','HI','41318','USA','','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(7,1,0,'Jennette','Karren','Boyer','Linn','Carlisle Cos. Inc.',0,'JBoyer1376@hotmail.com','JennetteBoyer460@yahoo.com','(635) 423-2109','(149) 938-9343','34225 Pecan','','Modesto','LA','54425','USA','','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(8,1,0,'Jeanice','Yaeko','Workman','Mica','Olin Corp.',0,'JWorkman3431@abiz.com','JeaniceW2612@abiz.com','(849) 588-5197','(618) 335-6988','88313 Cedar','','Kansas City','OH','22540','USA','','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(9,1,0,'Sarita','Kathryne','Riley','Richard','NTL Incorporated',0,'SaritaR5381@abiz.com','SRiley2342@comcast.net','(945) 871-3304','(699) 442-5040','7621 Apache','','Kissimmee','NJ','40456','USA','','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(10,1,0,'Alona','Kelvin','Pitts','Lucius','DQE Inc.',0,'AlonaPitts552@bdiddy.com','AlonaP1527@aol.com','(510) 230-5252','(299) 938-2733','67434 7th','','Fresno','MS','03300','USA','','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(11,1,0,'Yoko','Nila','Maldonado','Tawana','W.R. Berkley Corporation',0,'YokoM5705@aol.com','YokoMaldonado37@aol.com','(842) 955-2512','(153) 631-1479','978 Hemlock','','Punta Gorda','AR','10694','USA','','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(12,1,0,'Glennis','Teodoro','Daniel','Shela','Enterprise Products Partners L.P.',0,'GlennisD4905@abiz.com','GlennisD5037@comcast.net','(154) 718-9243','(564) 255-1377','42449 8th','','North Port','MS','78511','USA','','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(13,1,0,'Elaina','Erin','Glover','Marla','EGL Inc.',0,'ElainaG5060@yahoo.com','ElainaG96@hotmail.com','(260) 375-6685','(138) 373-9923','68155 Mesquite','','Eugene','AL','28162','USA','','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(14,1,0,'Angelena','Jaime','Thomas','Enedina','Echostar Communications Corporation',0,'AThomas9923@aol.com','AThomas9735@aol.com','(908) 708-6659','(621) 420-9259','94778 Fourth','','San Buenaventura','OH','55089','USA','','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(15,1,0,'Janean','Elinor','Gray','Precious','Tyson Foods Inc',0,'JaneanGray230@comcast.net','JaneanGray300@aol.com','(308) 673-5805','(805) 163-6943','5591 Cypress','','Boise City','CO','24728','USA','','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(16,1,0,'Naomi','Petronila','Pickett','Damien','Eli Lilly and Company',0,'NaomiPickett185@hotmail.com','NPickett8668@gmail.com','(633) 784-3150','(887) 842-8281','21786 Sixth','','El Monte','KY','33274','USA','','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(17,1,0,'Foster','Travis','Hodges','Mabel','AutoNation, Inc.',0,'FosterH2078@gmail.com','FHodges595@yahoo.com','(622) 890-5625','(563) 380-4993','46411 Cherry','','Hesperia','CA','11211','USA','','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(18,1,0,'Madge','Delores','Klein','Derrick','XO Communications Inc',0,'MadgeKlein112@hotmail.com','MKlein9112@yahoo.com','(759) 522-8231','(169) 780-2140','54004 Washington','','Costa Mesa','WY','31445','USA','','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(19,1,0,'Rolando','Lizabeth','Greer','Luise','Oglethorpe Power Corp.',0,'RolandoGreer907@yahoo.com','RolandoGreer434@aol.com','(630) 452-4994','(118) 958-6580','82558 Quail','','Temecula','CA','23237','USA','','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(20,1,0,'Edna','Latesha','Rasmussen','Gayla','Tribune Company',0,'ERasmussen2361@abiz.com','ERasmussen4973@aol.com','(344) 746-4378','(912) 909-5169','3845 South Carolina','','Dayton','ND','39106','USA','','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(21,1,0,'Marissa','Eun','Frank','Gustavo','Del Monte Foods Co',0,'MarissaF4382@hotmail.com','MFrank4374@abiz.com','(250) 541-1638','(713) 420-3455','46010 Lehua','','Apple Valley','VA','40495','USA','','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(22,1,0,'Johanna','Carol','Ewing','Diamond','Shopko Stores Inc',0,'JohannaE8975@abiz.com','JohannaEwing660@aol.com','(159) 495-6626','(309) 977-5449','34005 Birch','','Champaign','NJ','65466','USA','','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(23,1,0,'Marisha','Bruce','Spencer','Lana','Alleghany Corporation',0,'MSpencer9268@gmail.com','MSpencer5337@bdiddy.com','(842) 453-6238','(253) 459-3331','1126 Redwood','','Fort Lauderdale','WY','11528','USA','','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(24,1,0,'Cleora','Alison','Jefferson','Arnoldo','WGL Holdings Inc',0,'CleoraJefferson104@gmail.com','CleoraJ9306@comcast.net','(440) 866-1708','(320) 805-9719','19080 12th','','Knoxville','PA','86258','USA','','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(25,1,0,'Gwyn','Reginia','Moran','Maragaret','GreenPoint Financial Corp.',0,'GwynM1375@hotmail.com','GwynM877@gmail.com','(564) 121-5197','(170) 802-7066','6589 A','','Hesperia','NH','58047','USA','','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(26,1,0,'Inger','Opal','Harding','Ruth','Siebel Systems Inc',0,'IngerHarding18@gmail.com','IngerH6987@gmail.com','(784) 278-7242','(182) 143-5574','32264 S 100','','Athens','PA','79947','USA','','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(27,1,0,'Quintin','Lannie','Cervantes','Delmer','Terex Corp',0,'QCervantes2106@aol.com','QCervantes3583@gmail.com','(531) 953-3270','(125) 806-6697','35219 Holly','','Paterson','TX','38287','USA','','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(28,1,0,'Dannie','Jacquelyn','Downs','Shantae','Armstrong Holdings, Inc.',0,'DannieD9041@hotmail.com','DannieDowns806@abiz.com','(573) 639-1663','(875) 920-1534','5268 Palo Verde','','Boston','VT','32888','USA','','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(29,1,0,'Sudie','Evangeline','Palmer','Candis','Reader\'s Digest Association Inc.',0,'SPalmer6237@abiz.com','SPalmer4258@abiz.com','(548) 712-1351','(499) 849-4031','74391 8th','','New Orleans','MA','92790','USA','','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(30,1,0,'Sunni','Edmond','Chapman','Vernice','Storage Technology Corporation',0,'SunniChapman577@aol.com','SChapman5341@hotmail.com','(363) 863-6426','(825) 610-9001','64303 Aloha','','Hampton','OH','93015','USA','','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0);
+INSERT INTO `Transactant` VALUES (1,1,0,'Nakia','Emerald','Horton','Amado','Amtran, Inc.',0,'NHorton7376@yahoo.com','NakiaH4987@abiz.com','(277) 733-0360','(106) 333-7498','7929 Fifth','','Orlando','TN','98081','USA','',0,'','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(2,1,0,'Tynisha','Tayna','Hogan','Sherell','Dollar Tree Stores, Inc.',0,'THogan4998@comcast.net','TynishaH1055@yahoo.com','(386) 706-2316','(742) 282-6041','35539 Canyon','','Syracuse','GA','27887','USA','',0,'','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(3,1,0,'Dionna','Renata','Leon','Debrah','Teradyne Inc',0,'DionnaLeon640@hotmail.com','DionnaLeon211@comcast.net','(819) 196-7847','(379) 779-6762','58105 Orchard','','Trenton','NJ','31847','USA','',0,'','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(4,1,0,'Ruthe','Margie','Chapman','Breann','ALLETE, Inc.',0,'RChapman5026@bdiddy.com','RChapman6485@hotmail.com','(247) 965-1936','(615) 751-3944','23903 Sixth','','Apple Valley','KY','84059','USA','',0,'','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(5,1,0,'Darryl','Solomon','Hammond','Omar','Protective Life Corp',0,'DHammond7290@hotmail.com','DHammond6836@aol.com','(563) 789-7432','(607) 756-3940','66294 Sunset','','Laredo','NV','02081','USA','',0,'','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(6,1,0,'Ahmad','Anthony','Rich','Florentino','Mail-Well Inc.',0,'ARich5757@hotmail.com','AhmadR2721@abiz.com','(387) 951-2223','(385) 191-6004','70237 Zoo','','Coral Springs','HI','41318','USA','',0,'','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(7,1,0,'Jennette','Karren','Boyer','Linn','Carlisle Cos. Inc.',0,'JBoyer1376@hotmail.com','JennetteBoyer460@yahoo.com','(635) 423-2109','(149) 938-9343','34225 Pecan','','Modesto','LA','54425','USA','',0,'','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(8,1,0,'Jeanice','Yaeko','Workman','Mica','Olin Corp.',0,'JWorkman3431@abiz.com','JeaniceW2612@abiz.com','(849) 588-5197','(618) 335-6988','88313 Cedar','','Kansas City','OH','22540','USA','',0,'','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(9,1,0,'Sarita','Kathryne','Riley','Richard','NTL Incorporated',0,'SaritaR5381@abiz.com','SRiley2342@comcast.net','(945) 871-3304','(699) 442-5040','7621 Apache','','Kissimmee','NJ','40456','USA','',0,'','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(10,1,0,'Alona','Kelvin','Pitts','Lucius','DQE Inc.',0,'AlonaPitts552@bdiddy.com','AlonaP1527@aol.com','(510) 230-5252','(299) 938-2733','67434 7th','','Fresno','MS','03300','USA','',0,'','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(11,1,0,'Yoko','Nila','Maldonado','Tawana','W.R. Berkley Corporation',0,'YokoM5705@aol.com','YokoMaldonado37@aol.com','(842) 955-2512','(153) 631-1479','978 Hemlock','','Punta Gorda','AR','10694','USA','',0,'','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(12,1,0,'Glennis','Teodoro','Daniel','Shela','Enterprise Products Partners L.P.',0,'GlennisD4905@abiz.com','GlennisD5037@comcast.net','(154) 718-9243','(564) 255-1377','42449 8th','','North Port','MS','78511','USA','',0,'','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(13,1,0,'Elaina','Erin','Glover','Marla','EGL Inc.',0,'ElainaG5060@yahoo.com','ElainaG96@hotmail.com','(260) 375-6685','(138) 373-9923','68155 Mesquite','','Eugene','AL','28162','USA','',0,'','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(14,1,0,'Angelena','Jaime','Thomas','Enedina','Echostar Communications Corporation',0,'AThomas9923@aol.com','AThomas9735@aol.com','(908) 708-6659','(621) 420-9259','94778 Fourth','','San Buenaventura','OH','55089','USA','',0,'','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(15,1,0,'Janean','Elinor','Gray','Precious','Tyson Foods Inc',0,'JaneanGray230@comcast.net','JaneanGray300@aol.com','(308) 673-5805','(805) 163-6943','5591 Cypress','','Boise City','CO','24728','USA','',0,'','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(16,1,0,'Naomi','Petronila','Pickett','Damien','Eli Lilly and Company',0,'NaomiPickett185@hotmail.com','NPickett8668@gmail.com','(633) 784-3150','(887) 842-8281','21786 Sixth','','El Monte','KY','33274','USA','',0,'','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(17,1,0,'Foster','Travis','Hodges','Mabel','AutoNation, Inc.',0,'FosterH2078@gmail.com','FHodges595@yahoo.com','(622) 890-5625','(563) 380-4993','46411 Cherry','','Hesperia','CA','11211','USA','',0,'','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(18,1,0,'Madge','Delores','Klein','Derrick','XO Communications Inc',0,'MadgeKlein112@hotmail.com','MKlein9112@yahoo.com','(759) 522-8231','(169) 780-2140','54004 Washington','','Costa Mesa','WY','31445','USA','',0,'','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(19,1,0,'Rolando','Lizabeth','Greer','Luise','Oglethorpe Power Corp.',0,'RolandoGreer907@yahoo.com','RolandoGreer434@aol.com','(630) 452-4994','(118) 958-6580','82558 Quail','','Temecula','CA','23237','USA','',0,'','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(20,1,0,'Edna','Latesha','Rasmussen','Gayla','Tribune Company',0,'ERasmussen2361@abiz.com','ERasmussen4973@aol.com','(344) 746-4378','(912) 909-5169','3845 South Carolina','','Dayton','ND','39106','USA','',0,'','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(21,1,0,'Marissa','Eun','Frank','Gustavo','Del Monte Foods Co',0,'MarissaF4382@hotmail.com','MFrank4374@abiz.com','(250) 541-1638','(713) 420-3455','46010 Lehua','','Apple Valley','VA','40495','USA','',0,'','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(22,1,0,'Johanna','Carol','Ewing','Diamond','Shopko Stores Inc',0,'JohannaE8975@abiz.com','JohannaEwing660@aol.com','(159) 495-6626','(309) 977-5449','34005 Birch','','Champaign','NJ','65466','USA','',0,'','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(23,1,0,'Marisha','Bruce','Spencer','Lana','Alleghany Corporation',0,'MSpencer9268@gmail.com','MSpencer5337@bdiddy.com','(842) 453-6238','(253) 459-3331','1126 Redwood','','Fort Lauderdale','WY','11528','USA','',0,'','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(24,1,0,'Cleora','Alison','Jefferson','Arnoldo','WGL Holdings Inc',0,'CleoraJefferson104@gmail.com','CleoraJ9306@comcast.net','(440) 866-1708','(320) 805-9719','19080 12th','','Knoxville','PA','86258','USA','',0,'','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(25,1,0,'Gwyn','Reginia','Moran','Maragaret','GreenPoint Financial Corp.',0,'GwynM1375@hotmail.com','GwynM877@gmail.com','(564) 121-5197','(170) 802-7066','6589 A','','Hesperia','NH','58047','USA','',0,'','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(26,1,0,'Inger','Opal','Harding','Ruth','Siebel Systems Inc',0,'IngerHarding18@gmail.com','IngerH6987@gmail.com','(784) 278-7242','(182) 143-5574','32264 S 100','','Athens','PA','79947','USA','',0,'','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(27,1,0,'Quintin','Lannie','Cervantes','Delmer','Terex Corp',0,'QCervantes2106@aol.com','QCervantes3583@gmail.com','(531) 953-3270','(125) 806-6697','35219 Holly','','Paterson','TX','38287','USA','',0,'','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(28,1,0,'Dannie','Jacquelyn','Downs','Shantae','Armstrong Holdings, Inc.',0,'DannieD9041@hotmail.com','DannieDowns806@abiz.com','(573) 639-1663','(875) 920-1534','5268 Palo Verde','','Boston','VT','32888','USA','',0,'','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(29,1,0,'Sudie','Evangeline','Palmer','Candis','Reader\'s Digest Association Inc.',0,'SPalmer6237@abiz.com','SPalmer4258@abiz.com','(548) 712-1351','(499) 849-4031','74391 8th','','New Orleans','MA','92790','USA','',0,'','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(30,1,0,'Sunni','Edmond','Chapman','Vernice','Storage Technology Corporation',0,'SunniChapman577@aol.com','SChapman5341@hotmail.com','(363) 863-6426','(825) 610-9001','64303 Aloha','','Hampton','OH','93015','USA','',0,'','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0);
 /*!40000 ALTER TABLE `Transactant` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -2451,9 +2498,10 @@ CREATE TABLE `User` (
   `EmergencyContactName` varchar(100) NOT NULL DEFAULT '',
   `EmergencyContactAddress` varchar(100) NOT NULL DEFAULT '',
   `EmergencyContactTelephone` varchar(100) NOT NULL DEFAULT '',
-  `EmergencyEmail` varchar(100) NOT NULL DEFAULT '',
+  `EmergencyContactEmail` varchar(100) NOT NULL DEFAULT '',
   `AlternateAddress` varchar(100) NOT NULL DEFAULT '',
-  `EligibleFutureUser` smallint(6) NOT NULL DEFAULT '1',
+  `EligibleFutureUser` tinyint(1) NOT NULL DEFAULT '1',
+  `FLAGS` bigint(20) NOT NULL DEFAULT '0',
   `Industry` varchar(100) NOT NULL DEFAULT '',
   `SourceSLSID` bigint(20) NOT NULL DEFAULT '0',
   `LastModTime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -2489,6 +2537,7 @@ CREATE TABLE `Vehicle` (
   `VehicleModel` varchar(80) NOT NULL DEFAULT '',
   `VehicleColor` varchar(80) NOT NULL DEFAULT '',
   `VehicleYear` bigint(20) NOT NULL DEFAULT '0',
+  `VIN` varchar(20) NOT NULL DEFAULT '',
   `LicensePlateState` varchar(80) NOT NULL DEFAULT '',
   `LicensePlateNumber` varchar(80) NOT NULL DEFAULT '',
   `ParkingPermitNumber` varchar(80) NOT NULL DEFAULT '',
@@ -2508,7 +2557,7 @@ CREATE TABLE `Vehicle` (
 
 LOCK TABLES `Vehicle` WRITE;
 /*!40000 ALTER TABLE `Vehicle` DISABLE KEYS */;
-INSERT INTO `Vehicle` VALUES (1,1,1,'car','Ford','E-Series','',1992,'SD','I35H17F','0292318','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(2,3,1,'car','Dodge','Ram 2500','',1994,'AZ','F9Z8K84','0663285','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(3,4,1,'car','Dodge','Stratus','',1997,'KY','G7J72R1','6256893','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(4,5,1,'car','Lamborghini','Gallardo','',2003,'NE','O2GZ434','3536096','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(5,6,1,'car','GMC','Suburban 2500','',1998,'TX','4QJL290','0555994','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(6,7,1,'car','Ferrari','612 Scaglietti','',2007,'AR','5AB542G','3513669','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(7,8,1,'car','Honda','Element','',2004,'DE','X65F3D0','9432993','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(8,9,1,'car','Porsche','911','',2008,'GA','6XJ50S3','2887655','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(9,10,1,'car','Aston Martin','V8 Vantage S','',2011,'GA','RQ97I28','2058354','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(10,11,1,'car','Chevrolet','1500','',1999,'PA','29N4D6I','0052174','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(11,12,1,'car','Isuzu','Trooper','',1996,'MN','57W0TM2','5313668','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(12,13,1,'car','Mercedes-Benz','E-Class','',1985,'GA','D9119YG','4241088','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(13,14,1,'car','Mercedes-Benz','GL-Class','',2007,'KS','3L2R48O','1462972','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(14,15,1,'car','Nissan','Quest','',2006,'NV','76BG91H','5326107','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(15,16,1,'car','HUMMER','H1','',2003,'AK','V08F0M1','0704553','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(16,18,1,'car','Toyota','T100','',1994,'DC','I187L8F','0549791','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(17,19,1,'car','Lamborghini','Murciélago','',2006,'IA','YJ96E62','2454985','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(18,20,1,'car','GMC','Sierra 3500','',2012,'WV','56Q4H8U','4027771','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(19,21,1,'car','Chevrolet','Beretta','',1992,'PA','C30XJ93','1901544','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(20,22,1,'car','Lincoln','Navigator L','',2011,'SD','2E1DS04','8451511','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(21,23,1,'car','Chevrolet','Silverado','',1999,'RI','071N0CV','4558250','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(22,24,1,'car','Saab','9000','',1992,'WI','39W2LQ4','1523155','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(23,25,1,'car','Mercury','Grand Marquis','',2001,'DE','2A9T4T2','9455812','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(24,26,1,'car','Infiniti','Q','',1993,'DC','8BE393S','8661867','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(25,27,1,'car','Ford','Courier','',1988,'TX','7X4J90Z','8353214','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(26,28,1,'car','Chevrolet','HHR','',2007,'OR','3H8ZT65','5475216','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(27,29,1,'car','Cadillac','Eldorado','',1996,'ND','8E9V7Z8','5721762','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(28,30,1,'car','Buick','LeSabre','',1992,'MN','30DI88L','2724542','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0);
+INSERT INTO `Vehicle` VALUES (1,1,1,'car','Ford','E-Series','',1992,'','SD','I35H17F','0292318','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(2,3,1,'car','Dodge','Ram 2500','',1994,'','AZ','F9Z8K84','0663285','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(3,4,1,'car','Dodge','Stratus','',1997,'','KY','G7J72R1','6256893','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(4,5,1,'car','Lamborghini','Gallardo','',2003,'','NE','O2GZ434','3536096','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(5,6,1,'car','GMC','Suburban 2500','',1998,'','TX','4QJL290','0555994','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(6,7,1,'car','Ferrari','612 Scaglietti','',2007,'','AR','5AB542G','3513669','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(7,8,1,'car','Honda','Element','',2004,'','DE','X65F3D0','9432993','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(8,9,1,'car','Porsche','911','',2008,'','GA','6XJ50S3','2887655','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(9,10,1,'car','Aston Martin','V8 Vantage S','',2011,'','GA','RQ97I28','2058354','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(10,11,1,'car','Chevrolet','1500','',1999,'','PA','29N4D6I','0052174','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(11,12,1,'car','Isuzu','Trooper','',1996,'','MN','57W0TM2','5313668','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(12,13,1,'car','Mercedes-Benz','E-Class','',1985,'','GA','D9119YG','4241088','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(13,14,1,'car','Mercedes-Benz','GL-Class','',2007,'','KS','3L2R48O','1462972','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(14,15,1,'car','Nissan','Quest','',2006,'','NV','76BG91H','5326107','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(15,16,1,'car','HUMMER','H1','',2003,'','AK','V08F0M1','0704553','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(16,18,1,'car','Toyota','T100','',1994,'','DC','I187L8F','0549791','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(17,19,1,'car','Lamborghini','Murciélago','',2006,'','IA','YJ96E62','2454985','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(18,20,1,'car','GMC','Sierra 3500','',2012,'','WV','56Q4H8U','4027771','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(19,21,1,'car','Chevrolet','Beretta','',1992,'','PA','C30XJ93','1901544','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(20,22,1,'car','Lincoln','Navigator L','',2011,'','SD','2E1DS04','8451511','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(21,23,1,'car','Chevrolet','Silverado','',1999,'','RI','071N0CV','4558250','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(22,24,1,'car','Saab','9000','',1992,'','WI','39W2LQ4','1523155','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(23,25,1,'car','Mercury','Grand Marquis','',2001,'','DE','2A9T4T2','9455812','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(24,26,1,'car','Infiniti','Q','',1993,'','DC','8BE393S','8661867','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(25,27,1,'car','Ford','Courier','',1988,'','TX','7X4J90Z','8353214','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(26,28,1,'car','Chevrolet','HHR','',2007,'','OR','3H8ZT65','5475216','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(27,29,1,'car','Cadillac','Eldorado','',1996,'','ND','8E9V7Z8','5721762','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0),(28,30,1,'car','Buick','LeSabre','',1992,'','MN','30DI88L','2724542','2018-02-13','2020-05-01','2018-06-07 03:09:38',0,'2018-06-07 03:09:38',0);
 /*!40000 ALTER TABLE `Vehicle` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -2521,4 +2570,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2018-06-07 21:02:58
+-- Dump completed on 2018-06-20 14:16:02

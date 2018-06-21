@@ -343,15 +343,16 @@ func closeLedgerPeriod(ctx context.Context, xbiz *XBusiness, li *GLAccount, lm *
 	nlm.Balance = bal
 	nlm.Dt = *dt
 	nlm.State = state
+	nlm.BID = xbiz.P.BID
 
-	Console("%s : InsertLedgerMarker nlm.State = %d\n",funcname, nlm.State)
+	// Console("%s : InsertLedgerMarker nlm.State = %d\n",funcname, nlm.State)
 
 	_, err = InsertLedgerMarker(ctx, &nlm) // this is a period close
 	if err != nil {
 		Ulog("%s: Error while inserting LedgerMarker: %s\n", funcname, err.Error())
 		return err
 	}
-	Console("%s : After insert: nlm.LMID = %d, nlm.State = %d\n",funcname, nlm.LMID, nlm.State)
+	// Console("%s : After insert: nlm.LMID = %d, nlm.State = %d\n",funcname, nlm.LMID, nlm.State)
 
 	return err
 }
@@ -359,7 +360,7 @@ func closeLedgerPeriod(ctx context.Context, xbiz *XBusiness, li *GLAccount, lm *
 // GenerateLedgerMarkers creates all ledgermarkers at d2
 func GenerateLedgerMarkers(ctx context.Context, xbiz *XBusiness, d2 *time.Time) error {
 	funcname := "GenerateLedgerMarkers"
-	Console("Entered: %s\n", funcname)
+	// Console("Entered: %s\n", funcname)
 	//----------------------------------------------------------------------------------
 	// Spin through all ledgers and update the LedgerMarkers with the ending balance...
 	//----------------------------------------------------------------------------------
@@ -378,7 +379,7 @@ func GenerateLedgerMarkers(ctx context.Context, xbiz *XBusiness, d2 *time.Time) 
 			LogAndPrint("%s: Could not get GLAccount %d (%s) in business %d\n", funcname, t[i].LID, t[i].GLNumber, xbiz.P.BID)
 			continue
 		}
-		Console("Calling closeLedgerPeriod for LMID = %d, d2 = %s with LMCLOSED\n", lm.LMID, d2.Format(RRDATETIMERPTFMT))
+		// Console("Calling closeLedgerPeriod for LMID = %d, d2 = %s with LMCLOSED\n", lm.LMID, d2.Format(RRDATETIMERPTFMT))
 		err = closeLedgerPeriod(ctx, xbiz, &t[i], &lm, d2, LMCLOSED)
 		if err != nil {
 			return err

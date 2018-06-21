@@ -39,27 +39,25 @@ type PeopleCSV struct {
 	PostalCode                string
 	Country                   string
 	Points                    string
-	AccountRep                string
+	ThirdPartySource          string
 	DateofBirth               string
 	EmergencyContactName      string
 	EmergencyContactAddress   string
 	EmergencyContactTelephone string
-	EmergencyEmail            string
+	EmergencyContactEmail     string
 	AlternateAddress          string
 	EligibleFutureUser        string
 	Industry                  string
 	SourceSLSID               string
 	CreditLimit               string
 	TaxpayorID                string
-	EmployerName              string
-	EmployerStreetAddress     string
-	EmployerCity              string
-	EmployerState             string
-	EmployerPostalCode        string
-	EmployerEmail             string
-	EmployerPhone             string
+	CompanyAddress            string
+	CompanyCity               string
+	CompanyState              string
+	CompanyPostalCode         string
+	CompanyEmail              string
+	CompanyPhone              string
 	Occupation                string
-	ApplicationFee            string
 	Notes                     string
 	DesiredUsageStartDate     string
 	RentableTypePreference    string
@@ -69,8 +67,6 @@ type PeopleCSV struct {
 	FollowUpDate              string
 	CSAgent                   string
 	OutcomeSLSID              string
-	FloatingDeposit           string
-	RAID                      string
 }
 
 // RentableCSV is struct that is used

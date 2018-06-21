@@ -549,6 +549,42 @@ func GetEpochAssessmentsByRentalAgreement(ctx context.Context, RAID int64) ([]As
 	return getAssessmentsByRows(ctx, rows)
 }
 
+// GetAssessmentsByRAIDRID gets all the Assessments associated with the
+// supplied BID/RAID/RID combination.  It returns the epoch instance of
+// recurring assessments. It will not return individual instances unless
+// they are epoch instances (non recurring assessments)
+//
+// INPUTS
+//    ctx  - context
+//    bid  - the biz
+//    raid - Rental Agreement id of interest
+//    rid  - the rentable of interest
+//
+// RETURNS
+//    array of assessments suitable for an assessment list in a RentalAgreement
+//-----------------------------------------------------------------------------
+func GetAssessmentsByRAIDRID(ctx context.Context, bid, raid, rid int64) ([]Assessment, error) {
+	var err error
+	var t []Assessment
+	if sessionCheck(ctx) {
+		return t, ErrSessionRequired
+	}
+
+	var rows *sql.Rows
+	fields := []interface{}{bid, raid, rid}
+	if tx, ok := DBTxFromContext(ctx); ok { // if transaction is supplied
+		stmt := tx.Stmt(RRdb.Prepstmt.GetAssessmentsByRAIDRID)
+		defer stmt.Close()
+		rows, err = stmt.Query(fields...)
+	} else {
+		rows, err = RRdb.Prepstmt.GetAssessmentsByRAIDRID.Query(fields...)
+	}
+	if err != nil {
+		return t, err
+	}
+	return getAssessmentsByRows(ctx, rows)
+}
+
 // GetAssessmentInstancesByParent for the supplied RAID
 // INPUTS
 //    id - id of Parent Assessment
@@ -5800,22 +5836,15 @@ func GetRentableMarketRate(ctx context.Context, xbiz *XBusiness, RID int64, d1, 
 	return marketRateValue, err
 }
 
-// GetRentableUsersInRange returns an array of payors (in the form of payors)
+// GetRentableUsersInRange returns an array of user (in the form of user)
 // associated with the supplied RentalAgreement ID during the time range d1-d2
 //-----------------------------------------------------------------------------
 func GetRentableUsersInRange(ctx context.Context, rid int64, d1, d2 *time.Time) ([]RentableUser, error) {
+	var err error
+	var t []RentableUser
 
-	var (
-		err error
-		t   []RentableUser
-	)
-
-	// session... context
-	if !(RRdb.noAuth && AppConfig.Env != extres.APPENVPROD) {
-		_, ok := SessionFromContext(ctx)
-		if !ok {
-			return t, ErrSessionRequired
-		}
+	if sessionCheck(ctx) {
+		return t, ErrSessionRequired
 	}
 
 	var rows *sql.Rows
@@ -7697,6 +7726,37 @@ func GetFlow(ctx context.Context, flowID int64) (Flow, error) {
 		row = stmt.QueryRow(fields...)
 	} else {
 		row = RRdb.Prepstmt.GetFlow.QueryRow(fields...)
+	}
+	return a, ReadFlow(row, &a)
+}
+
+// GetFlowForRAID reads a Flow structure based on the supplied
+// FlowType and ID
+//
+// INPUTS:
+//     flowtype = type of flow. "RA" or whatever
+//           ID - the id that refers to a permanent table association.
+//                for FlowType "RA", ID is the RAID
+//
+// RETURNS
+//     The Flow struct
+//     Any error encountered
+//-----------------------------------------------------------------------------
+func GetFlowForRAID(ctx context.Context, flowtype string, ID int64) (Flow, error) {
+	var a Flow
+
+	if sessionCheck(ctx) {
+		return a, ErrSessionRequired
+	}
+
+	var row *sql.Row
+	fields := []interface{}{flowtype, ID}
+	if tx, ok := DBTxFromContext(ctx); ok { // if transaction is supplied
+		stmt := tx.Stmt(RRdb.Prepstmt.GetFlowForRAID)
+		defer stmt.Close()
+		row = stmt.QueryRow(fields...)
+	} else {
+		row = RRdb.Prepstmt.GetFlowForRAID.QueryRow(fields...)
 	}
 	return a, ReadFlow(row, &a)
 }

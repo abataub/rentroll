@@ -16,7 +16,7 @@ var mySQLRpl = string("?")
 var myRpl = mySQLRpl
 
 // TRNSfields defined fields for Transactant, used in at least one other function
-var TRNSfields = string("TCID,BID,NLID,FirstName,MiddleName,LastName,PreferredName,CompanyName,IsCompany,PrimaryEmail,SecondaryEmail,WorkPhone,CellPhone,Address,Address2,City,State,PostalCode,Country,Website,CreateTS,CreateBy,LastModTime,LastModBy")
+var TRNSfields = string("TCID,BID,NLID,FirstName,MiddleName,LastName,PreferredName,CompanyName,IsCompany,PrimaryEmail,SecondaryEmail,WorkPhone,CellPhone,Address,Address2,City,State,PostalCode,Country,Website,FLAGS,CreateTS,CreateBy,LastModTime,LastModBy")
 
 // ASMTflds defined fields for AssessmentTypes, used in at least one other function
 // var ASMTflds = string("ASMTID,RARequired,ManageToBudget,Name,Description,LastModTime,LastModBy")
@@ -133,6 +133,8 @@ func buildPreparedStatements() {
 	Errcheck(err)
 	RRdb.Prepstmt.GetAllSingleInstanceAssessments, err = RRdb.Dbrr.Prepare("SELECT " + flds + " FROM Assessments WHERE BID=? AND (PASMID!=0 OR RentCycle=0) AND Start<? AND Stop>=?")
 	Errcheck(err)
+	RRdb.Prepstmt.GetAssessmentsByRAIDRID, err = RRdb.Dbrr.Prepare("SELECT " + flds + " FROM Assessments WHERE PASMID = 0 AND BID=? AND RAID=? AND RID=?")
+	Errcheck(err)
 	RRdb.Prepstmt.GetAssessmentsByRAIDRange, err = RRdb.Dbrr.Prepare("SELECT " + flds + " FROM Assessments WHERE (RentCycle=0  OR (RentCycle>0 AND PASMID>0)) AND RAID=? AND Stop>=? AND Start<?")
 	Errcheck(err)
 	RRdb.Prepstmt.GetAssessmentsByRARRange, err = RRdb.Dbrr.Prepare("SELECT " + flds + " FROM Assessments WHERE (RentCycle=0  OR (RentCycle>0 AND PASMID>0)) AND RAID=? AND RID=? AND Stop>=? AND Start<?")
@@ -188,6 +190,23 @@ func buildPreparedStatements() {
 	RRdb.Prepstmt.UpdateBusiness, err = RRdb.Dbrr.Prepare("UPDATE Business SET " + s3 + " WHERE BID=?")
 	Errcheck(err)
 	RRdb.Prepstmt.GetAllBusinessRentableSpecialtyTypes, err = RRdb.Dbrr.Prepare("SELECT RSPID,BID,Name,Fee,Description,CreateTS,CreateBy,LastModTime,LastModBy FROM RentableSpecialty WHERE BID=?")
+	Errcheck(err)
+
+	//==========================================
+	// Business Properties
+	//==========================================
+	flds = "BPID,BID,Name,Data,FLAGS,CreateTS,CreateBy,LastModTime,LastModBy"
+	RRdb.DBFields["BusinessProperties"] = flds
+	RRdb.Prepstmt.GetBusinessProperties, err = RRdb.Dbrr.Prepare("SELECT " + flds + " FROM BusinessProperties where BPID=?")
+	Errcheck(err)
+	RRdb.Prepstmt.GetBusinessPropertiesByName, err = RRdb.Dbrr.Prepare("SELECT " + flds + " FROM BusinessProperties WHERE Name=? AND BID=?")
+	Errcheck(err)
+	s1, s2, s3, _, _ = GenSQLInsertAndUpdateStrings(flds)
+	RRdb.Prepstmt.InsertBusinessProperties, err = RRdb.Dbrr.Prepare("INSERT INTO BusinessProperties (" + s1 + ") VALUES(" + s2 + ")")
+	Errcheck(err)
+	RRdb.Prepstmt.UpdateBusinessPropertiesData, err = RRdb.Dbrr.Prepare("UPDATE BusinessProperties SET Data = JSON_REPLACE(Data, CONCAT('$.', ?), CAST(? AS JSON)) where BPID=?")
+	Errcheck(err)
+	RRdb.Prepstmt.DeleteBusinessProperties, err = RRdb.Dbrr.Prepare("DELETE from BusinessProperties WHERE BPID=?")
 	Errcheck(err)
 
 	//==========================================
@@ -347,7 +366,7 @@ func buildPreparedStatements() {
 	//==========================================
 	// Flow
 	//==========================================
-	flds = "FlowID,BID,UserRefNo,FlowType,Data,CreateTS,CreateBy,LastModTime,LastModBy"
+	flds = "FlowID,BID,UserRefNo,FlowType,ID,Data,CreateTS,CreateBy,LastModTime,LastModBy"
 	RRdb.DBFields["Flow"] = flds
 	RRdb.Prepstmt.GetFlowMetaDataInRange, err = RRdb.Dbrr.Prepare("SELECT FlowID,BID,UserRefNo,FlowType,CreateTS,CreateBy,LastModTime,LastModBy FROM Flow WHERE ? <= CreateTS AND CreateTS < ?")
 	Errcheck(err)
@@ -356,6 +375,8 @@ func buildPreparedStatements() {
 	RRdb.Prepstmt.GetFlowsByFlowType, err = RRdb.Dbrr.Prepare("SELECT " + flds + " FROM Flow where FlowType=?")
 	Errcheck(err)
 	RRdb.Prepstmt.GetFlowIDsByUser, err = RRdb.Dbrr.Prepare("SELECT DISTINCT FlowID FROM Flow where CreateBy=?")
+	Errcheck(err)
+	RRdb.Prepstmt.GetFlowForRAID, err = RRdb.Dbrr.Prepare("SELECT " + flds + " FROM Flow WHERE FlowType=? AND ID=?")
 	Errcheck(err)
 	s1, s2, s3, _, _ = GenSQLInsertAndUpdateStrings(flds)
 	RRdb.Prepstmt.InsertFlow, err = RRdb.Dbrr.Prepare("INSERT INTO Flow (" + s1 + ") VALUES(" + s2 + ")")
@@ -477,7 +498,7 @@ func buildPreparedStatements() {
 	//==========================================
 	// LEDGER-->  GLAccount
 	//==========================================
-	flds = "LID,PLID,BID,RAID,TCID,GLNumber,Status,Name,AcctType,AllowPost,FLAGS,Description,CreateTS,CreateBy,LastModTime,LastModBy"
+	flds = "LID,PLID,BID,RAID,TCID,GLNumber,Name,AcctType,AllowPost,FLAGS,Description,CreateTS,CreateBy,LastModTime,LastModBy"
 	RRdb.DBFields["GLAccount"] = flds
 	RRdb.Prepstmt.GetLedgerByGLNo, err = RRdb.Dbrr.Prepare("SELECT " + flds + " FROM GLAccount WHERE BID=? AND GLNumber=?")
 	Errcheck(err)
@@ -658,7 +679,7 @@ func buildPreparedStatements() {
 	//==========================================
 	// PAYOR
 	//==========================================
-	flds = "TCID,BID,CreditLimit,TaxpayorID,AccountRep,EligibleFuturePayor,CreateTS,CreateBy,LastModTime,LastModBy"
+	flds = "TCID,BID,CreditLimit,TaxpayorID,ThirdPartySource,EligibleFuturePayor,FLAGS,SSN,DriversLicense,GrossIncome,CreateTS,CreateBy,LastModTime,LastModBy"
 	RRdb.DBFields["Payor"] = flds
 	RRdb.Prepstmt.GetPayor, err = RRdb.Dbrr.Prepare("SELECT " + flds + " FROM Payor where TCID=?")
 	Errcheck(err)
@@ -673,7 +694,7 @@ func buildPreparedStatements() {
 	//==========================================
 	// PROSPECT
 	//==========================================
-	flds = "TCID,BID,EmployerName,EmployerStreetAddress,EmployerCity,EmployerState,EmployerPostalCode,EmployerEmail,EmployerPhone,Occupation,ApplicationFee,DesiredUsageStartDate,RentableTypePreference,FLAGS,Approver,DeclineReasonSLSID,OtherPreferences,FollowUpDate,CSAgent,OutcomeSLSID,FloatingDeposit,RAID,CreateTS,CreateBy,LastModTime,LastModBy"
+	flds = "TCID,BID,CompanyAddress,CompanyCity,CompanyState,CompanyPostalCode,CompanyEmail,CompanyPhone,Occupation,DesiredUsageStartDate,RentableTypePreference,FLAGS,EvictedDes,ConvictedDes,BankruptcyDes,Approver,DeclineReasonSLSID,OtherPreferences,FollowUpDate,CSAgent,OutcomeSLSID,CurrentAddress,CurrentLandLordName,CurrentLandLordPhoneNo,CurrentReasonForMoving,CurrentLengthOfResidency,PriorAddress,PriorLandLordName,PriorLandLordPhoneNo,PriorReasonForMoving,PriorLengthOfResidency,CommissionableThirdParty,CreateTS,CreateBy,LastModTime,LastModBy"
 	RRdb.DBFields["Prospect"] = flds
 	RRdb.Prepstmt.GetProspect, err = RRdb.Dbrr.Prepare("SELECT " + flds + " FROM Prospect where TCID=?")
 	Errcheck(err)
@@ -688,7 +709,7 @@ func buildPreparedStatements() {
 	//==========================================
 	// User
 	//==========================================
-	flds = "TCID,BID,Points,DateofBirth,EmergencyContactName,EmergencyContactAddress,EmergencyContactTelephone,EmergencyEmail,AlternateAddress,EligibleFutureUser,Industry,SourceSLSID,CreateTS,CreateBy,LastModTime,LastModBy"
+	flds = "TCID,BID,Points,DateofBirth,EmergencyContactName,EmergencyContactAddress,EmergencyContactTelephone,EmergencyContactEmail,AlternateAddress,EligibleFutureUser,FLAGS,Industry,SourceSLSID,CreateTS,CreateBy,LastModTime,LastModBy"
 	RRdb.DBFields["User"] = flds
 	RRdb.Prepstmt.GetUser, err = RRdb.Dbrr.Prepare("SELECT " + flds + " FROM User where TCID=?")
 	Errcheck(err)
@@ -1317,7 +1338,6 @@ func buildPreparedStatements() {
 	// TRANSACTANT
 	//==========================================
 	RRdb.DBFields["Transactant"] = TRNSfields
-	// "TCID,BID,NLID,FirstName,MiddleName,LastName,PreferredName,CompanyName,IsCompany,PrimaryEmail,SecondaryEmail,WorkPhone,CellPhone,Address,Address2,City,State,PostalCode,Country,Website,LastModTime,LastModBy"
 	RRdb.Prepstmt.GetTransactantTypeDown, err = RRdb.Dbrr.Prepare("SELECT TCID,FirstName,MiddleName,LastName,CompanyName,IsCompany FROM Transactant WHERE BID=? AND (FirstName LIKE ? OR MiddleName LIKE ? OR LastName LIKE ? OR CompanyName LIKE ?) LIMIT ?")
 	Errcheck(err)
 	RRdb.Prepstmt.CountBusinessTransactants, err = RRdb.Dbrr.Prepare("SELECT COUNT(TCID) FROM Transactant WHERE BID=?")
@@ -1350,7 +1370,7 @@ func buildPreparedStatements() {
 	//==========================================
 	// Vehicle
 	//==========================================
-	flds = "VID,TCID,BID,VehicleType,VehicleMake,VehicleModel,VehicleColor,VehicleYear,LicensePlateState,LicensePlateNumber,ParkingPermitNumber,DtStart,DtStop,CreateTS,CreateBy,LastModTime,LastModBy"
+	flds = "VID,TCID,BID,VehicleType,VehicleMake,VehicleModel,VehicleColor,VehicleYear,VIN,LicensePlateState,LicensePlateNumber,ParkingPermitNumber,DtStart,DtStop,CreateTS,CreateBy,LastModTime,LastModBy"
 	RRdb.DBFields["Vehicle"] = flds
 	RRdb.Prepstmt.GetVehicle, err = RRdb.Dbrr.Prepare("SELECT " + flds + " FROM Vehicle where VID=?")
 	Errcheck(err)

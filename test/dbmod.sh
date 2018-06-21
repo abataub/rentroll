@@ -376,6 +376,82 @@ DBNAME="rentroll"
 # June 7, 2018
 # ALTER TABLE Flow ADD UserRefNo VARCHAR(50) NOT NULL DEFAULT '' AFTER BID;
 
+# Jun 13, 2018
+# ALTER TABLE Transactant MODIFY IsCompany TINYINT(1) NOT NULL DEFAULT 0;
+
+# Jun 14, 2018
+# ALTER TABLE User MODIFY EligibleFutureUser TINYINT(1) NOT NULL DEFAULT 1;
+
+# Jun 14, 2018
+# ALTER TABLE Payor MODIFY EligibleFuturePayor TINYINT(1) NOT NULL DEFAULT 1;
+
+# Jun 14, 2018
+# ALTER TABLE GLAccount MODIFY AllowPost TINYINT(1) NOT NULL DEFAULT 0;
+
+# June 14, 2018
+# ALTER TABLE Transactant ADD FLAGS BIGINT NOT NULL DEFAULT 0 AFTER Website;
+# ALTER TABLE Prospect ADD EvictedDes  VARCHAR(2048) NOT NULL DEFAULT '' AFTER FLAGS;
+# ALTER TABLE Prospect ADD ConvictedDes  VARCHAR(2048) NOT NULL DEFAULT '' AFTER EvictedDes;
+# ALTER TABLE Prospect ADD BankruptcyDes  VARCHAR(2048) NOT NULL DEFAULT '' AFTER ConvictedDes;
+# ALTER TABLE Payor ADD FLAGS BIGINT NOT NULL DEFAULT 0 AFTER EligibleFuturePayor;
+# ALTER TABLE Payor ADD SSN CHAR(128) NOT NULL DEFAULT '' AFTER FLAGS;
+# ALTER TABLE Payor ADD DriversLicense CHAR(128) NOT NULL DEFAULT '' AFTER SSN;
+# ALTER TABLE Payor ADD GrossIncome DECIMAL(19,4) NOT NULL DEFAULT 0.0 AFTER DriversLicense;
+# ALTER TABLE User ADD FLAGS BIGINT NOT NULL DEFAULT 0 AFTER EligibleFutureUser;
+
+# Jun 15, 2018
+# ALTER TABLE OtherDeliverables MODIFY Active TINYINT(1) NOT NULL DEFAULT 0;
+# ALTER TABLE Flow ADD ID BIGINT NOT NULL DEFAULT 0 AFTER FlowType;
+# ALTER TABLE Vehicle ADD VIN VARCHAR(20) NOT NULL DEFAULT '' AFTER VehicleYear;
+
+# June 15, 2018
+# ALTER TABLE Payor CHANGE AccountRep ThirdPartySource BIGINT(20) NOT NULL DEFAULT 0;
+
+# June 18, 2018
+# ALTER TABLE Prospect CHANGE EmployerStreetAddress CompanyAddress VARCHAR(100) NOT NULL DEFAULT '';
+# ALTER TABLE Prospect CHANGE EmployerCity CompanyCity VARCHAR(100) NOT NULL DEFAULT '';
+# ALTER TABLE Prospect CHANGE EmployerState CompanyState VARCHAR(100) NOT NULL DEFAULT '';
+# ALTER TABLE Prospect CHANGE EmployerPostalCode CompanyPostalCode VARCHAR(100) NOT NULL DEFAULT '';
+# ALTER TABLE Prospect CHANGE EmployerEmail CompanyEmail VARCHAR(100) NOT NULL DEFAULT '';
+# ALTER TABLE Prospect CHANGE EmployerPhone CompanyPhone VARCHAR(100) NOT NULL DEFAULT '';
+# ALTER TABLE Prospect DROP COLUMN EmployerName;
+
+# June 18, 2018
+# ALTER TABLE Prospect ADD CurrentAddress VARCHAR(200) NOT NULL DEFAULT '' AFTER OutcomeSLSID;
+# ALTER TABLE Prospect ADD CurrentLandLordName VARCHAR(100) NOT NULL DEFAULT '' AFTER CurrentAddress;
+# ALTER TABLE Prospect ADD CurrentLandLordPhoneNo VARCHAR(20) NOT NULL DEFAULT '' AFTER CurrentLandLordName;
+# ALTER TABLE Prospect ADD CurrentReasonForMoving BIGINT NOT NULL DEFAULT 0 AFTER CurrentLandLordPhoneNo;
+# ALTER TABLE Prospect ADD CurrentLengthOfResidency VARCHAR(100) NOT NULL DEFAULT '' AFTER CurrentReasonForMoving;
+# ALTER TABLE Prospect ADD PriorAddress VARCHAR(200) NOT NULL DEFAULT '' AFTER CurrentLengthOfResidency;
+# ALTER TABLE Prospect ADD PriorLandLordName VARCHAR(100) NOT NULL DEFAULT '' AFTER PriorAddress;
+# ALTER TABLE Prospect ADD PriorLandLordPhoneNo VARCHAR(20) NOT NULL DEFAULT '' AFTER PriorLandLordName;
+# ALTER TABLE Prospect ADD PriorReasonForMoving BIGINT NOT NULL DEFAULT 0 AFTER PriorLandLordPhoneNo;
+# ALTER TABLE Prospect ADD PriorLengthOfResidency VARCHAR(100) NOT NULL DEFAULT '' AFTER PriorReasonForMoving;
+# ALTER TABLE Transactant ADD Comment VARCHAR(2048) NOT NULL DEFAULT '' AFTER FLAGS;
+# ALTER TABLE Prospect DROP COLUMN FloatingDeposit, DROP COLUMN RAID;
+# CREATE TABLE BusinessProperties (
+#     BPID BIGINT NOT NULL AUTO_INCREMENT,
+#     BID BIGINT NOT NULL DEFAULT 0,                              -- Business
+#     Name VARCHAR(100) NOT NULL DEFAULT '',                      -- Property Name
+#     FLAGS BIGINT NOT NULL DEFAULT 0,                            -- last bit =0(EDI disabled), =1(EDI enabled)
+#     Data JSON DEFAULT NULL,                                     -- JSON Data for this property
+#     LastModTime TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,  -- when was this record last written
+#     LastModBy BIGINT NOT NULL DEFAULT 0,                        -- employee UID (from phonebook) that modified it
+#     CreateTS TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,      -- when was this record created
+#     CreateBy BIGINT NOT NULL DEFAULT 0,                         -- employee UID (from phonebook) that created this record
+#     PRIMARY KEY (BPID)
+# );
+
+# June 19, 2018
+# ALTER TABLE Prospect DROP COLUMN ApplicationFee;
+# ALTER TABLE User CHANGE EmergencyEmail EmergencyContactEmail VARCHAR(100) NOT NULL DEFAULT '';
+
+# June 20, 2018
+# ALTER TABLE Prospect ADD CommissionableThirdParty TEXT NOT NULL DEFAULT '' AFTER PriorLengthOfResidency;
+
+# June 20, 2018
+# ALTER TABLE GLAccount DROP COLUMN Status;
+
 #=====================================================
 #  Put modifications to schema in the lines below
 #=====================================================
@@ -395,7 +471,7 @@ EOF
 #==============================================================================
 while IFS='' read -r f || [[ -n "${f}" ]]; do
     if [ -f ${f} ]; then
-    	echo "DROP DATABASE IF EXISTS ${DBNAME}; create database rentroll"
+    	echo "DROP DATABASE IF EXISTS ${DBNAME}; create database ${DBNAME}" | ${MYSQL}
 		echo -n "${f}: loading... "
 		${MYSQL} ${DBNAME} < ${f}
 		echo -n "updating... "

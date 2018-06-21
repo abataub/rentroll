@@ -20,9 +20,9 @@ func IsByteDataValidJSON(b []byte) bool {
 	return json.Unmarshal(b, &raw) == nil
 }
 
-// IsFlowDataValidJSON checks that passed flow data is valid json or not
+// IsValidJSONConversion checks that passed flow data is valid json or not
 // This data will be inserted/updated to data with json type column
-func IsFlowDataValidJSON(raw json.RawMessage) bool {
+func IsValidJSONConversion(raw json.RawMessage) bool {
 	_, err := json.Marshal(&raw)
 	return err == nil
 }
@@ -33,8 +33,8 @@ var Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 // Digits contains characters for 0 - 9
 var Digits = "0123456789"
 
-// UserRefNoLength specifies the number of characters needed in the ref
-// no in order to be "safe"
+// UserRefNoLength specifies the number of characters needed in the RefNo
+// in order to be "safe"
 const UserRefNoLength = 20
 
 // GenerateUserRefNo generate a unique identifier that can be given to users

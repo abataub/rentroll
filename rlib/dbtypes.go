@@ -538,7 +538,7 @@ type OtherDeliverables struct {
 	ODID        int64     // Unique ID for this OtherDeliverables
 	BID         int64     // Business
 	Name        string    // Description of the other deliverables. Ex: 2 Seaworld tickets
-	Active      int64     // Flag: Is this list still active?  dropdown interface lists only the active ones
+	Active      bool      // Flag: Is this list still active?  dropdown interface lists only the active ones
 	LastModTime time.Time // when was this record last written
 	LastModBy   int64     // employee UID (from phonebook) that modified it
 	CreateTS    time.Time // when was this record created
@@ -691,7 +691,7 @@ type Transactant struct {
 	LastName       string
 	PreferredName  string
 	CompanyName    string // sometimes the entity will be a company
-	IsCompany      int64  // 1 => the entity is a company, 0 = not a company
+	IsCompany      bool   // 1 => the entity is a company, 0 = not a company
 	PrimaryEmail   string
 	SecondaryEmail string
 	WorkPhone      string
@@ -703,46 +703,62 @@ type Transactant struct {
 	PostalCode     string
 	Country        string
 	Website        string // person's website
-	LastModTime    time.Time
-	LastModBy      int64
-	CreateTS       time.Time // when was this record created
-	CreateBy       int64     // employee UID (from phonebook) that created it
+	/*
+	   FLAG BITS:
+	   1<<0 OptIntoMarketingCampaign -- Does the user want to receive mkting info
+	   1<<1 AcceptGeneralEmail       -- Will user accept email
+	   1<<2 VIP                      -- Is this person a VIP
+	*/
+	FLAGS       int64
+	Comment     string
+	LastModTime time.Time
+	LastModBy   int64
+	CreateTS    time.Time // when was this record created
+	CreateBy    int64     // employee UID (from phonebook) that created it
 }
 
 // Prospect contains info over and above
 type Prospect struct {
-	// ProspectID             int64
-	TCID                   int64
-	BID                    int64
-	EmployerName           string
-	EmployerStreetAddress  string
-	EmployerCity           string
-	EmployerState          string
-	EmployerPostalCode     string
-	EmployerEmail          string
-	EmployerPhone          string
-	Occupation             string
-	ApplicationFee         float64   // if non-zero this Prospect is an applicant
-	DesiredUsageStartDate  time.Time // predicted rent start date
-	RentableTypePreference int64     // RentableType
-	FLAGS                  uint64    // 0 = Approved/NotApproved,
-	Approver               int64     // UID from Directory
-	DeclineReasonSLSID     int64     // SLSid of reason
-	OtherPreferences       string    // arbitrary text
-	FollowUpDate           time.Time // automatically fill out this date to sysdate + 24hrs
-	CSAgent                int64     // Accord Directory UserID - for the CSAgent
-	OutcomeSLSID           int64     // id of string from a list of outcomes. Melissa to provide reasons
-	FloatingDeposit        float64   // d $(GLCASH) _, c $(GLGENRCV) _; assign to a shell of a Rental Agreement
-	RAID                   int64     // created to hold On Account amount of Floating Deposit
-	LastModTime            time.Time
-	LastModBy              int64
-	CreateTS               time.Time // when was this record created
-	CreateBy               int64     // employee UID (from phonebook) that created it
+	TCID                     int64
+	BID                      int64
+	CompanyAddress           string
+	CompanyCity              string
+	CompanyState             string
+	CompanyPostalCode        string
+	CompanyEmail             string
+	CompanyPhone             string
+	Occupation               string
+	DesiredUsageStartDate    time.Time // predicted rent start date
+	RentableTypePreference   int64     // RentableType
+	FLAGS                    uint64    // 0 = Approved/NotApproved,
+	EvictedDes               string    // explanation when FLAGS & (1<<2) > 0
+	ConvictedDes             string    // explanation when FLAGS & (1<<3) > 0
+	BankruptcyDes            string    // explanation when FLAGS & (1<<4) > 0
+	Approver                 int64     // UID from Directory
+	DeclineReasonSLSID       int64     // SLSid of reason
+	OtherPreferences         string    // arbitrary text
+	FollowUpDate             time.Time // automatically fill out this date to sysdate + 24hrs
+	CSAgent                  int64     // Accord Directory UserID - for the CSAgent
+	OutcomeSLSID             int64     // id of string from a list of outcomes. Melissa to provide reasons
+	CurrentAddress           string
+	CurrentLandLordName      string
+	CurrentLandLordPhoneNo   string
+	CurrentReasonForMoving   int64
+	CurrentLengthOfResidency string
+	PriorAddress             string
+	PriorLandLordName        string
+	PriorLandLordPhoneNo     string
+	PriorReasonForMoving     int64
+	PriorLengthOfResidency   string
+	CommissionableThirdParty string
+	LastModTime              time.Time
+	LastModBy                int64
+	CreateTS                 time.Time // when was this record created
+	CreateBy                 int64     // employee UID (from phonebook) that created it
 }
 
 // User contains all info common to a person
 type User struct {
-	// UserID                    int64
 	TCID                      int64
 	BID                       int64
 	Points                    int64
@@ -750,9 +766,10 @@ type User struct {
 	EmergencyContactName      string
 	EmergencyContactAddress   string
 	EmergencyContactTelephone string
-	EmergencyEmail            string
+	EmergencyContactEmail     string
 	AlternateAddress          string
-	EligibleFutureUser        int64
+	EligibleFutureUser        bool
+	FLAGS                     uint64
 	Industry                  string
 	SourceSLSID               int64
 	LastModTime               time.Time
@@ -762,6 +779,33 @@ type User struct {
 	CreateBy                  int64     // employee UID (from phonebook) that created it
 }
 
+// Payor is attributes of the person financially responsible
+// for the rent.
+type Payor struct {
+	TCID                int64
+	BID                 int64
+	CreditLimit         float64
+	TaxpayorID          string
+	ThirdPartySource    int64
+	EligibleFuturePayor bool
+	FLAGS               uint64
+	SSN                 string // encrypted in database, decrypted here
+	DriversLicense      string // encrypted in database, decrypted here
+	GrossIncome         float64
+	LastModTime         time.Time
+	LastModBy           int64
+	CreateTS            time.Time // when was this record created
+	CreateBy            int64     // employee UID (from phonebook) that created it
+}
+
+// XPerson of all person related attributes
+type XPerson struct {
+	Trn Transactant
+	Usr User
+	Psp Prospect
+	Pay Payor
+}
+
 // TransactantTypeDown is the struct needed to match names in typedown controls
 type TransactantTypeDown struct {
 	TCID        int64
@@ -769,7 +813,7 @@ type TransactantTypeDown struct {
 	MiddleName  string
 	LastName    string
 	CompanyName string
-	IsCompany   int64
+	IsCompany   bool
 	Recid       int64 `json:"recid"`
 }
 
@@ -790,6 +834,7 @@ type Vehicle struct {
 	VehicleModel        string
 	VehicleColor        string
 	VehicleYear         int64
+	VIN                 string
 	LicensePlateState   string
 	LicensePlateNumber  string
 	ParkingPermitNumber string
@@ -799,30 +844,6 @@ type Vehicle struct {
 	LastModBy           int64
 	CreateTS            time.Time // when was this record created
 	CreateBy            int64     // employee UID (from phonebook) that created it
-}
-
-// Payor is attributes of the person financially responsible
-// for the rent.
-type Payor struct {
-	// PayorID             int64
-	TCID                int64
-	BID                 int64
-	CreditLimit         float64
-	TaxpayorID          string
-	AccountRep          int64
-	EligibleFuturePayor int64
-	LastModTime         time.Time
-	LastModBy           int64
-	CreateTS            time.Time // when was this record created
-	CreateBy            int64     // employee UID (from phonebook) that created it
-}
-
-// XPerson of all person related attributes
-type XPerson struct {
-	Trn Transactant
-	Usr User
-	Psp Prospect
-	Pay Payor
 }
 
 // Assessment is a charge associated with a Rentable
@@ -926,6 +947,28 @@ type Business struct {
 	// ParkingPermitInUse    int64     // yes/no  0 = no, 1 = yes
 	CreateTS time.Time // when was this record created
 	CreateBy int64     // employee UID (from phonebook) that created it
+}
+
+// BusinessProperties defines properties for a business. The value
+// of the property is defined as JSON data in the Data field. It should
+// be unmarshaled into a struct that corresponds to the Name
+type BusinessProperties struct {
+	BPID        int64
+	BID         int64
+	Name        string          // "general" or whatever sub-category you want
+	Data        json.RawMessage // json data in mysql -- marshaled BizProps
+	FLAGS       int64           // FLAGS
+	LastModTime time.Time       // when was this record last written
+	LastModBy   int64           // employee UID (from phonebook) that modified it
+	CreateTS    time.Time       // when was this record created
+	CreateBy    int64           // employee UID (from phonebook) that created it
+}
+
+// BizProps is the golang struct for a category of business properties.
+// This struct will be marshaled into JSON data and stored in BusinessProperties
+type BizProps struct {
+	PetFees     []string // AR names of all Pet Fees
+	VehicleFees []string // AR names of all Vehicle Fees
 }
 
 // Building defines the location of a Building that is part of a Business
@@ -1387,18 +1430,18 @@ type LedgerMarker struct {
 
 // GLAccount describes the static (or mostly static) attributes of a Ledger
 type GLAccount struct {
-	Recid       int       `json:"recid"` // this is for the grid widget
-	LID         int64     // unique id for this GLAccount
-	PLID        int64     // unique id of Parent, 0 if no parent
-	BID         int64     // Business unit associated with this GLAccount
-	RAID        int64     // associated rental agreement, this field is only used when Type = 1
-	TCID        int64     // associated payor, this field is only used when Type = 1
-	GLNumber    string    // acct system name
-	Status      int64     // Whether a GL Account is currently unknown=0, inactive=1, active=2
+	Recid    int    `json:"recid"` // this is for the grid widget
+	LID      int64  // unique id for this GLAccount
+	PLID     int64  // unique id of Parent, 0 if no parent
+	BID      int64  // Business unit associated with this GLAccount
+	RAID     int64  // associated rental agreement, this field is only used when Type = 1
+	TCID     int64  // associated payor, this field is only used when Type = 1
+	GLNumber string // acct system name
+	//Status      int64     // Whether a GL Account is currently unknown=0, inactive=1, active=2
 	Name        string    // descriptive name for the GLAccount
 	AcctType    string    // QB Acct Type: Income, Expense, Fixed Asset, Bank, Loan, Credit Card, Equity, Accounts Receivable, Other Current Asset, Other Asset, Accounts Payable, Other Current Liability, Cost of Goods Sold, Other Income, Other Expense
-	AllowPost   int64     // 0 = no posting, 1 = posting is allowed
-	FLAGS       uint64    //
+	AllowPost   bool      // 0 = no posting, 1 = posting is allowed
+	FLAGS       uint64    // 1<<0 = inactive:  0 = active account, 1 = inactive account
 	Description string    // description for this account
 	LastModTime time.Time // auto updated
 	LastModBy   int64     // user making the mod
@@ -1413,6 +1456,7 @@ type Flow struct {
 	FlowID      int64           // primary auto increment key
 	UserRefNo   string          // user reference string
 	FlowType    string          // RA="Rental Agreement Flow" etc...
+	ID          int64           // id from permanent table, for FlowType "RA" it would be RAID
 	Data        json.RawMessage // json data in mysql
 	LastModTime time.Time       // last modified time
 	LastModBy   int64           // last modified by whom
@@ -1825,6 +1869,13 @@ type RRprepSQL struct {
 	UpdateClosePeriod                       *sql.Stmt
 	DeleteClosePeriod                       *sql.Stmt
 	GetFlowMetaDataInRange                  *sql.Stmt
+	GetFlowForRAID                          *sql.Stmt
+	GetBusinessProperties                   *sql.Stmt
+	GetBusinessPropertiesByName             *sql.Stmt
+	InsertBusinessProperties                *sql.Stmt
+	UpdateBusinessPropertiesData            *sql.Stmt
+	DeleteBusinessProperties                *sql.Stmt
+	GetAssessmentsByRAIDRID                 *sql.Stmt
 }
 
 // DeleteBusinessFromDB deletes information from all tables if it is part of the supplied BID.
@@ -1877,6 +1928,7 @@ var RRdb struct {
 	BUDlist  Str2Int64Map                 // list of known business Designations
 	DBFields map[string]string            // map of db table fields DBFields[tablename] = field list
 	Zone     *time.Location               // what timezone should the server use?
+	Key      []byte                       // crypto key
 	noAuth   bool                         // if enable that means auth is not required, (should be moved in some common app struct!)
 	Rand     *rand.Rand                   // for generating Reference Numbers or other UniqueIDs
 	// TODO(sudip): NoAuth will be moved to something internal pkg app struct
